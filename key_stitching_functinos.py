@@ -249,7 +249,7 @@ def init_key(n, rand_seed=-1):
     print 'DONE!'
     return ''.join((np.random.rand(n) > 0.5).astype(int).astype(str))
 
-def build_samples(key, num_samples, sample_len, window_size, flip_probability, delete_probability, insert_probability):
+def build_samples(key, num_samples, sample_len, window_size, flip_probability, delete_probability, insert_probability,n):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
     '''
@@ -893,7 +893,7 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size,window_size):
     common_samples_array = np.array(common_samples_df['sample'])
     common_count_array = np.array(common_samples_df['count'])
 
-    tree_pointers = [None] * len(common_samples_array)
+    tree_pointers = [[] for i in range(len(common_samples_array))]
     edge_left_pointers = range(len(common_samples_array))
 
     print 'building Tree no error fixing...'
@@ -918,21 +918,22 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size,window_size):
         left_sample_number = saveIndexArray[idx1]
         left_sample = np.binary_repr(num=left_sample_number, width=window_size)
         mask = 1
-    for stitch_shift in range(1, stitch_shift_size + 1):
-        temp = left_sample_number << stitch_shift  # shift the bit
-        temp &= ~(mask << window_size)
-        mask = (mask << 1) + 1
+        for stitch_shift in range(1, stitch_shift_size + 1):
+            temp = left_sample_number << stitch_shift  # shift the bit
+            temp &= ~(mask << window_size)
+            mask = (mask << 1) + 1
 
-    for j in xrange(2 ** stitch_shift):
-        if (all2PowerWindowArray[temp + j] > 0) and (left_sample_number != (temp + j)):
-            right_sample = np.binary_repr(num=temp + j, width=window_size)
-            idx2 = np.where(saveIndexArray == BitArray(bin=right_sample).uint)[0]
-            tree_pointers[idx1].append({'next': idx2,
-                                        'shift': stitch_shift})
-            if idx2 in edge_left_pointers:
-                edge_left_pointers.remove(idx2)
+            for j in xrange(2 ** stitch_shift):
+                if (all2PowerWindowArray[temp + j] > 0) and (left_sample_number != (temp + j)):
+                    right_sample = np.binary_repr(num=temp + j, width=window_size)
+                    idx2 = np.where(saveIndexArray == BitArray(bin=right_sample).uint)[0]
+                    tree_pointers[idx1].append({'next': idx2,
+                                                'shift': stitch_shift})
+                    if idx2 in edge_left_pointers:
+                        edge_left_pointers.remove(idx2)
     print 'DONE!'
     return tree_pointers, edge_left_pointers
+
 def build_tree_path(path, key, tree_pointers, common_samples_array, retrieved_key, shift):
     # return an array of all the possible pathes
     if len(tree_pointers[path[-1]]) == 0:  # there is an optional "next" node
@@ -953,6 +954,7 @@ def build_tree_path(path, key, tree_pointers, common_samples_array, retrieved_ke
                 retrieved_key.append(key)
                 booli = False
         return a
+
 def stitch_tree(common_samples_df, tree_pointers, edge_left_pointers):
     '''
     traverse the tree pathes, starting from the root, and generate as long sequences as possible
@@ -994,6 +996,7 @@ def prune_samples_yael_extended(result_df, min_count=-1, extended=True, max_dist
 	print "the max repetition is: "+str(max(common_samples_df['count']))
 	print 'DONE!'
 	return common_samples_df.sort_values(by='count', ascending=False)  # more reliable samples first
+
 def build_shift_pointers_yael_error_fixer(common_samples_array, stitch_shift_size, max_hd=1):
     '''
     this version includes simple error fixing

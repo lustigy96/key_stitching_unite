@@ -27,34 +27,55 @@ if __name__== "__main__":
     hex_key_500="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
     key=''.join(hex2bin_map[i] for i in hex_key_500)
     #path="C:/YAEL/BGU/data_for_proj/key_stich/good_decoded_samples.txt"
-    path="/home/ubu/Yael/results/key500_probe300_good_decoded_samples_486K.txt"
-    key_length= 2048
+    path="./samples/key500_probe300_good_decoded_samples_486K.txt"
+    n=key_length= len(key)
     stitch_shift_size = 2
     window_size_vec = [30]
     samples_num_vec = [100000]
     start_samp = 0
     result_dict = {}
 
-    f_key_res = open("/home/ubu/Yael/results/key_res.txt", "w")
-    f_data = open("/home/ubu/Yael/results/data.txt", "w")
+    f_key_res = open("./results/key_res.txt", "w")
+    f_data = open("./results/data.txt", "w")
 
     f_key_res.write("-------key------\n" + key + '\n')
-    f_data.write(' '.join(window_size_vec))
-    f_data.write(' '.join(samples_num_vec))
+    #f_data.write(' '.join(window_size_vec))
+    #f_data.write(' '.join(samples_num_vec))
 
     for window_size in window_size_vec:
         for samples_num in samples_num_vec:
             result_df, result_dict = func.build_samples_from_file([path], window_size, start_samp, samples_num, result_dict)
             common_samples_df = func.prune_samples(result_df, min_count=-1,quantile=0.5)
 
-            shift_pointers_pure = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
             tree_pointers,edge_left_pointers = func.build_shift_pointers_tree(common_samples_df, stitch_shift_size,window_size)
 
-            retrieved_key_pure = func.stitch(common_samples_df, shift_pointers_pure)
             retrieved_key_tree = func.stitch_tree(common_samples_df, tree_pointers, edge_left_pointers)
 
-            candidate_key_pure = max(retrieved_key_pure, key=len)
             candidate_key_tree = max(retrieved_key_tree, key=len)
+            string = "\noriginal key(len={0}):\n".format(n) + key
+            print string
+            string = "\ncandidate_key_tree(len={0}):\n".format(len(candidate_key_tree)) + candidate_key_tree
+            print string
+            string = "\nkey.find(candidate_key_tree) = " + str(key.find(candidate_key_tree))
+            print string
+            string = "\nlevenshtein_edit_dist(key, candidate_key_tree) = \n" + str(
+                func.levenshtein_edit_dist(key, candidate_key_tree))
+            print string
+
+
+
+            shift_pointers_pure = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
+            retrieved_key_pure = func.stitch(common_samples_df, shift_pointers_pure)
+            candidate_key_pure = max(retrieved_key_pure, key=len)
+            string = "\noriginal key(len={0}):\n".format(n) + key
+            print string
+            string = "\ncandidate_key_pure(len={0}):\n".format(len(candidate_key_pure)) + candidate_key_pure
+            print string
+            string = "\nkey.find(candidate_key_pure) = " + str(key.find(candidate_key_pure))
+            print string
+            string = "\nlevenshtein_edit_dist(key, candidate_key_pure) = \n" + str(
+                func.levenshtein_edit_dist(key, candidate_key_pure))
+            print string
 
             '''
                f_key_res.write(
