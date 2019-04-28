@@ -290,48 +290,40 @@ def build_samples(key, num_samples, sample_len, window_size, flip_probability, d
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
     print 'DONE!'
     return result_df
-###
-def build_samples_from_file(pathlist, window_size): ####
-    result_dict = {}
-    count_lines = 0
+def build_samples_from_file(p_list,window_size,sample_start, sample_end, result_dict):
+    count_lines=-1
+    stop=False
     print("build samples...")
-    for p in pathlist:
-
+    for p in p_list:
+        if stop: break
         with open(p) as f:
             for line in f:
-
-                # sample_start = np.random.randint(key_length - sample_len + 1)
-                if count_lines % 1000 == 0:
-                    print count_lines
-
                 count_lines += 1
-                sample = s = np.array(" ".join(line).split(" ")[:-1]).astype(int)
+                if count_lines>=sample_end:
+                    stop=True
+                    break
+                if count_lines<sample_start: continue
+                if count_lines%10000==0: print count_lines
+                sample =  s=np.array(" ".join(line).split(" ")[:-1]).astype(int)
                 for window_start in range(len(sample) - window_size + 1):
                     window = sample[window_start:window_start + window_size]
                     window_key = ''.join(window.astype(str))
-                    if window_key not in result_dict:  # change to sub-string
+                    if window_key not in result_dict: # change to sub-string
                         result_dict[window_key] = {'sample': window_key,
-                                                   'count': 1,
-                                                   'weight': sum(window),
-                                                   'similar_count': 0,
-                                                   # 'sample_start': [sample_start + window_start],
-                                                   # 'similar_samples': [],
-                                                   'closest_majority_sample': ''}
+                                                    'count': 1,
+                                                    'weight': sum(window),
+                                                    'similar_count': 0,
+                                                    #'sample_start': [sample_start + window_start],
+                                                    #'similar_samples': [],
+                                                    'closest_majority_sample': ''}
                     else:
                         result_dict[window_key]['count'] += 1
-                        # if sample_start + window_start not in result_dict[window_key]['similar_samples']:
+                        #if sample_start + window_start not in result_dict[window_key]['similar_samples']:
                         #    result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
                         #        sample_start + window_start]
-
-                # if count_lines % 10000 == 0:
-                #     print count_lines
-                #     break
-
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
-    result_df.to_csv(F_CSV_SAMPLES)
     print 'DONE!'
-    return result_df
-###
+    return result_df, result_dict
 def prune_samples(result_df, min_count=-1, quantile=0.5):
     '''
     returns a subset of the snippets dataset which consists only of snippets that show high statistical significance
@@ -351,7 +343,6 @@ def prune_samples(result_df, min_count=-1, quantile=0.5):
     #                common_samples_df.set_value(common_sample, 'similar_count', common_samples_df.loc[common_sample]['similar_count'] + 1)
     print 'DONE!'
     return common_samples_df.sort_values(by='count', ascending=False)  # more reliable samples first
-###
 def prune_samples_extended(result_df, min_count=-1, quantile=0.5, ignore_similar=True, min_count_radius=1,
                            levenshtein_radius=2):
     '''
@@ -977,40 +968,6 @@ def stitch_tree(common_samples_df, tree_pointers, edge_left_pointers):
         pathes.extend(build_tree_path([root], '', tree_pointers, common_samples_df, retrieved_key,
                                            len(common_samples_df[root]['sample']) - 1))
     return retrieved_key
-def build_samples_from_file_yael(p_list,window_size,sample_start, sample_end, result_dict):
-    count_lines=-1
-    stop=False
-    print("build samples...")
-    for p in p_list:
-        if stop: break
-        with open(p) as f:
-            for line in f:
-                count_lines += 1
-                if count_lines>=sample_end:
-                    stop=True
-                    break
-                if count_lines<sample_start: continue
-                if count_lines%10000==0: print count_lines
-                sample =  s=np.array(" ".join(line).split(" ")[:-1]).astype(int)
-                for window_start in range(len(sample) - window_size + 1):
-                    window = sample[window_start:window_start + window_size]
-                    window_key = ''.join(window.astype(str))
-                    if window_key not in result_dict: # change to sub-string
-                        result_dict[window_key] = {'sample': window_key,
-                                                    'count': 1,
-                                                    'weight': sum(window),
-                                                    'similar_count': 0,
-                                                    #'sample_start': [sample_start + window_start],
-                                                    #'similar_samples': [],
-                                                    'closest_majority_sample': ''}
-                    else:
-                        result_dict[window_key]['count'] += 1
-                        #if sample_start + window_start not in result_dict[window_key]['similar_samples']:
-                        #    result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
-                        #        sample_start + window_start]
-    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
-    print 'DONE!'
-    return result_df, result_dict
 #irrelavant'''
 def prune_samples_yael_extended(result_df, min_count=-1, extended=True, max_dist=3):
 	'''
