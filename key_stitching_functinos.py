@@ -7,8 +7,6 @@ import operator as op
 from functools import reduce
 from bitstring import BitArray
 
-key_length= 2048
-stitch_shift_size = 2
 window_size=30
 
 
@@ -461,7 +459,7 @@ def build_shift_pointers_gabi_pure_using_numpy(common_samples_df, stitch_shift_s
     common_count_array = np.array(common_samples_df['count'])
 
     print 'building DAG...'
-    shift_pointers2 = {'right_index': {}, 'left_index': {}}
+    shift_pointers = {'right_index': {}, 'left_index': {}}
     right_index = None
     left_index = None
     '''this part is to test if gabi and my optimization give the same reasults'''
@@ -477,21 +475,21 @@ def build_shift_pointers_gabi_pure_using_numpy(common_samples_df, stitch_shift_s
                 if hamming_dist(left_sample[stitch_shift:], right_sample[:-stitch_shift]) == 0:
                     if not right_index:
                         right_index = np.array([right_sample])
-                        shift_pointers2['right_index'][right_sample] = {'right_sample': right_sample,
+                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
                                                                         'left_sample': left_sample,
                                                                         'shift': stitch_shift}
                     elif not np.any(right_index == right_sample):
                         np.append(right_index, right_sample)
-                        shift_pointers2['right_index'][right_sample] = {'right_sample': right_sample,
+                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
                                                                         'left_sample': left_sample,
                                                                         'shift': stitch_shift}
                     if not left_index:
                         left_index = np.array([left_sample])
-                        shift_pointers2['left_index'][left_sample] = {'right_sample': right_sample,
+                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
                                                                       'left_sample': left_sample, 'shift': stitch_shift}
                     elif not np.any(left_index == left_sample):
                         np.append(left_index, left_sample)
-                        shift_pointers2['left_index'][left_sample] = {'right_sample': right_sample,
+                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
                                                                       'left_sample': left_sample, 'shift': stitch_shift}
                     break_stitch_shift_loop = True
                     break
@@ -499,29 +497,32 @@ def build_shift_pointers_gabi_pure_using_numpy(common_samples_df, stitch_shift_s
                 break
     print 'DONE!'
 
-    for left_sample in shift_pointers['left_index']:
-        right_sample = shift_pointers['left_index'][left_sample]['right_sample']
+    # for left_sample in shift_pointers['left_index']:
+    #     right_sample = shift_pointers['left_index'][left_sample]['right_sample']
+    #
+    #     if left_sample != shift_pointers['right_index'][right_sample]['left_sample']:
+    #         print shift_pointers['left_index'][left_sample]
+    #         print shift_pointers['right_index'][right_sample]
+    #         print "somthig worng 1"
+    #
+    # for right_sample in shift_pointers['right_index']:
+    #     left_sample = shift_pointers['right_index'][right_sample]['left_sample']
+    #
+    #     if right_sample != shift_pointers['left_index'][left_sample]['right_sample']:
+    #         print shift_pointers['left_index'][left_sample]
+    #         print shift_pointers['right_index'][right_sample]
+    #         print "somthig worng 2"
 
-        if left_sample != shift_pointers['right_index'][right_sample]['left_sample']:
-            print shift_pointers['left_index'][left_sample]
-            print shift_pointers['right_index'][right_sample]
-            print "somthig worng 1"
-
-    for right_sample in shift_pointers['right_index']:
-        left_sample = shift_pointers['right_index'][right_sample]['left_sample']
-
-        if right_sample != shift_pointers['left_index'][left_sample]['right_sample']:
-            print shift_pointers['left_index'][left_sample]
-            print shift_pointers['right_index'][right_sample]
-            print "somthig worng 2"
-
-    return shift_pointers2
-def stitch(common_samples_array, shift_pointers):
+    return shift_pointers
+def stitch(common_samples_df, shift_pointers):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
     if it should support multiple incoming links, then the function should be adjusted
     '''
+
+    common_samples_array = np.array(common_samples_df['sample'])
+
     start_samples = []
     for sample in common_samples_array:
         if sample not in shift_pointers['right_index']:
@@ -584,7 +585,7 @@ def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_leng
         if not cycle_break:
             retrieved_key += [curr_key]
     return retrieved_key
-def build_shift_pointers_order(common_samples_df, stitch_shift_size, allowCycle=False):
+def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -614,13 +615,13 @@ def build_shift_pointers_order(common_samples_df, stitch_shift_size, allowCycle=
     '''************************************************************************************'''
 
     for i in xrange(len(common_samples_array)):  # run over all the order of the samples
-        left_sample_index = orderArray[i]
+        left_sample_number = orderArray[i]
         if i % 500 == 0:
             print "common_samples_array = " + str(i)
 
-        if (all2PowerWindowArray[left_sample_index] > 0):
-            count_of_left_sample = all2PowerWindowArray[left_sample_index]
-            left_sample = np.binary_repr(num=left_sample_index, width=window_size)
+        if (all2PowerWindowArray[left_sample_number] > 0):
+            count_of_left_sample = all2PowerWindowArray[left_sample_number]
+            left_sample = np.binary_repr(num=left_sample_number, width=window_size)
 
             for stitch_shift in range(1, stitch_shift_size + 1):
                 # if the shift left excteds number of bits then we should remove the msb
@@ -630,7 +631,7 @@ def build_shift_pointers_order(common_samples_df, stitch_shift_size, allowCycle=
                 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 count_of_right_sample = 0
                 for j in xrange(2 ** stitch_shift): #choose the max-count
-                    if (all2PowerWindowArray[temp + j] > count_of_right_sample) and (left_sample_index != (temp + j)):
+                    if (all2PowerWindowArray[temp + j] > count_of_right_sample) and (left_sample_number != (temp + j)):
                         count_of_right_sample = all2PowerWindowArray[temp + j]
                         right_sample = np.binary_repr(num=temp + j, width=window_size)
 
@@ -695,7 +696,7 @@ def compareGabiAndMe(shift_pointers, shift_pointers2):
     for sample in shift_pointers['right_index'].keys():
         if sample not in shift_pointers2['right_index']:
             print "error right_index"
-def build_shift_pointers_noorder(common_samples_df, stitch_shift_size, allowCycle=False):
+def build_shift_pointers_noorder(common_samples_df, stitch_shift_size, window_size,allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -774,7 +775,7 @@ def build_shift_pointers_noorder(common_samples_df, stitch_shift_size, allowCycl
 
     return shift_pointers
 #My diffrent approch optimization - dont use this
-def build_shift_pointers_position(common_samples_df, stitch_shift_size, allowCycle=False):
+def build_shift_pointers_position(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -893,7 +894,7 @@ def build_shift_pointers_position(common_samples_df, stitch_shift_size, allowCyc
     return shift_pointers
 
 '''YAEL'''
-def build_shift_pointers_tree(common_samples_df, stitch_shift_size):
+def build_shift_pointers_tree(common_samples_df, stitch_shift_size,window_size):
     '''
     build tree where snippets are connected if they can be stitched by a small shift
     !!! edge_left_pointers !!! is nnot necceraly fuul, cycles may be found
@@ -941,12 +942,12 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size):
                 edge_left_pointers.remove(idx2)
     print 'DONE!'
     return tree_pointers, edge_left_pointers
-def build_tree_path_(path, key, tree_pointers, common_samples_array, retrieved_key, shift):
+def build_tree_path(path, key, tree_pointers, common_samples_array, retrieved_key, shift):
     # return an array of all the possible pathes
     if len(tree_pointers[path[-1]]) == 0:  # there is an optional "next" node
         si = key[:-shift] + common_samples_array.iloc[path[-1]]['sample']
         retrieved_key.append(si)
-        return [path];
+        return [path]
     else:
         a = []
         booli = True
@@ -954,7 +955,7 @@ def build_tree_path_(path, key, tree_pointers, common_samples_array, retrieved_k
             if node['next'] not in path:
                 si = key[:-node['shift']] + common_samples_array.iloc[path[-1]]['sample']
                 a.extend(
-                    build_tree_path_yael(path + [node['next']], si, tree_pointers, common_samples_array, retrieved_key,
+                    build_tree_path(path + [node['next']], si, tree_pointers, common_samples_array, retrieved_key,
                                          node['shift']))
             elif booli:
                 a.append(path)
@@ -973,7 +974,7 @@ def stitch_tree(common_samples_df, tree_pointers, edge_left_pointers):
     pathes = []
     retrieved_key = []
     for root in edge_left_pointers:
-        pathes.extend(build_tree_path_yael([root], '', tree_pointers, common_samples_df, retrieved_key,
+        pathes.extend(build_tree_path([root], '', tree_pointers, common_samples_df, retrieved_key,
                                            len(common_samples_df[root]['sample']) - 1))
     return retrieved_key
 def build_samples_from_file_yael(p_list,window_size,sample_start, sample_end, result_dict):
