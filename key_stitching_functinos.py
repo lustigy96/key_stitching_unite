@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 # import matplotlib.pyplot as plt
 import os
 import operator as op
@@ -542,7 +543,7 @@ def stitch(common_samples_array, shift_pointers):
 
 
 '''BORIS'''
-def stitch_boris(common_samples_array, shift_pointers, allowCycle=False):
+def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_length=2048):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
@@ -975,6 +976,40 @@ def stitch_tree(common_samples_df, tree_pointers, edge_left_pointers):
         pathes.extend(build_tree_path_yael([root], '', tree_pointers, common_samples_df, retrieved_key,
                                            len(common_samples_df[root]['sample']) - 1))
     return retrieved_key
+def build_samples_from_file_yael(p_list,window_size,sample_start, sample_end, result_dict):
+    count_lines=-1
+    stop=False
+    print("build samples...")
+    for p in p_list:
+        if stop: break
+        with open(p) as f:
+            for line in f:
+                count_lines += 1
+                if count_lines>=sample_end:
+                    stop=True
+                    break
+                if count_lines<sample_start: continue
+                if count_lines%10000==0: print count_lines
+                sample =  s=np.array(" ".join(line).split(" ")[:-1]).astype(int)
+                for window_start in range(len(sample) - window_size + 1):
+                    window = sample[window_start:window_start + window_size]
+                    window_key = ''.join(window.astype(str))
+                    if window_key not in result_dict: # change to sub-string
+                        result_dict[window_key] = {'sample': window_key,
+                                                    'count': 1,
+                                                    'weight': sum(window),
+                                                    'similar_count': 0,
+                                                    #'sample_start': [sample_start + window_start],
+                                                    #'similar_samples': [],
+                                                    'closest_majority_sample': ''}
+                    else:
+                        result_dict[window_key]['count'] += 1
+                        #if sample_start + window_start not in result_dict[window_key]['similar_samples']:
+                        #    result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
+                        #        sample_start + window_start]
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+    print 'DONE!'
+    return result_df, result_dict
 #irrelavant'''
 def prune_samples_yael_extended(result_df, min_count=-1, extended=True, max_dist=3):
 	'''
