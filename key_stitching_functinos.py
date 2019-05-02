@@ -888,8 +888,13 @@ def build_shift_pointers_position(common_samples_df, stitch_shift_size, window_s
     return shift_pointers
 
 '''YAEL'''
+'''YAEL'''
+def tow_dimarr2file(pathes,f_path):
+    for p in pathes:
+        f_path.write(str(p))
+        f_path.write("/n")
 
-def shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndexArray,tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
+def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndexArray,tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
 
     for idx1 in xrange(start_idx,end_idx):
         left_sample_number = saveIndexArray[idx1]
@@ -910,6 +915,10 @@ def shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndex
 
 def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size):
     '''
+    Build the tree pointers
+    edge_left_pointers- the potential roots for a tree struct
+    tree_pointers- array of the possible contionus options for each string
+
     build tree where snippets are connected if they can be stitched by a small shift
     !!! edge_left_pointers !!! is nnot necceraly fuul, cycles may be found
     '''
@@ -941,7 +950,7 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
     for thr in range(10): #creating threads
         if thr==9: end=len(saveIndexArray)-1
         else: end=(thr+1)*length_10
-        t = threading.Thread(target=shift_pointer_thread, kwargs={'all2PowerWindowArray':all2PowerWindowArray,
+        t = threading.Thread(target=build_shift_pointer_thread, kwargs={'all2PowerWindowArray':all2PowerWindowArray,
                                                                 'all2PowerWindowArray_idx':all2PowerWindowArray_idx,
                                                                 'saveIndexArray':saveIndexArray,
                                                                 'tree_pointers':tree_pointers,
@@ -960,54 +969,69 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
 
     return tree_pointers, edge_left_pointers
 
-def build_tree_path(path, key, tree_pointers, common_samples_array, retrieved_key, shift):
-    # return an array of all the possible pathes
-    print path
-    if len(tree_pointers[path[-1]]) == 0:  # there is an optional "next" node
-        si = key[:-shift] + common_samples_array.iloc[path[-1]]#['sample']
-        retrieved_key.append(si)
-        return [path]
-    else:
-        a = []
-        booli = True
-        for node in tree_pointers[path[-1]]:
-            if node['next'] not in path:
-                si = key[:-node['shift']] + common_samples_array.iloc[path[-1]]#['sample']
-                a.extend(
-                    build_tree_path(path + [node['next']], si, tree_pointers, common_samples_array, retrieved_key,
-                                         node['shift']))
-            elif booli:
-                a.append(path)
-                retrieved_key.append(key)
-                booli = False
-        return a
-
-def stitch_tree(common_samples_df, tree_pointers, edge_left_pointers):
+#works, but not very efficiencive
+def build_shift_pointers_tree_noTreads(common_samples_df, stitch_shift_size,window_size):
     '''
-    traverse the tree pathes, starting from the root, and generate as long sequences as possible
-    the algorithm assumes each snippet (node) has at most one incoming link
-    if there is no root, the largest cycle will be found
+    Build the tree pointers
+    edge_left_pointers- the potential roots for a tree struct
+    tree_pointers- array of the possible contionus options for each string
+
+    build tree where snippets are connected if they can be stitched by a small shift
+    !!! edge_left_pointers !!! is nnot necceraly fuul, cycles may be found
     '''
-    print "building tree path + stich..."
-    if len(edge_left_pointers) == 0:
-        print 'no root'
-        return [];
-    pathes = []
-    retrieved_key = []
-    for root in edge_left_pointers:
-        a=build_tree_path([root], '', tree_pointers, common_samples_df['sample'], retrieved_key,30)#len(common_samples_df[root]['sample']) - 1)
-        pathes.extend(a)
-    return retrieved_key
+    common_samples_array = np.array(common_samples_df['sample'])
+    common_count_array = np.array(common_samples_df['count'])
 
+    tree_pointers = [[] for i in range(len(common_samples_array))]
+    edge_left_pointers = range(len(common_samples_array))
 
-#def build_tree_path_less_mem(path,key, tree_pointers, common_samples_array, retrieved_key, shift, min_len_key): #at first, send the window_size as a shift
-def stitch_tree_less_mem_thread(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key,f_key,f_path):
-    for idx, root in enumerate(edge_left_pointers):
-        a = build_tree_path_less_mem([root], '', common_samples_df['sample'],tree_pointers, window_size,
-                                     min_len_key,f_key,f_path)
+    print 'building Tree no error fixing...'
+    '''
+     build array 2^window, and put counted value in each index correspend for the samples
+     for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard 
+    '''
+    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
+    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
+    saveIndexArray = np.zeros(len(common_samples_array),
+                              dtype=np.uint32)  # this array in to save the order of the samples in common_samples_array
 
+    for idx, sample in enumerate(common_samples_array):
+        b = BitArray(bin=sample)
+        all2PowerWindowArray[b.uint] = common_count_array[idx]
+        all2PowerWindowArray_idx[b.uint] = idx
+        saveIndexArray[idx] = b.uint
 
-def build_tree_path_less_mem(path, key,common_samples_array,tree_pointers, shift,min_len_key,f_key,f_path): #at first, send the window_size as a shift
+    ''' now is the tree'''
+    for idx1 in xrange(len(saveIndexArray)):  # run over all the possible samples
+
+        if idx1 % 10000 == 0: print idx1
+        left_sample_number = saveIndexArray[idx1]
+        #left_sample = np.binary_repr(num=left_sample_number, width=window_size)
+        mask = 1
+        for stitch_shift in range(1, stitch_shift_size + 1):
+            temp = left_sample_number << stitch_shift  # shift the bit
+            temp &= ~(mask << window_size)
+            mask = (mask << 1) + 1
+
+            for j in xrange(2 ** stitch_shift):
+                if (all2PowerWindowArray[temp + j] > 0) and (left_sample_number != (temp + j)):
+                    #right_sample = np.binary_repr(num=temp + j, width=window_size)
+                    #idx2 = np.where(saveIndexArray == BitArray(bin=right_sample).uint)[0]
+                    idx2 = all2PowerWindowArray_idx[temp + j]
+                    tree_pointers[idx1].append({'next': idx2,
+                                                'shift': stitch_shift})
+                    if idx2 in edge_left_pointers:
+                        edge_left_pointers.remove(idx2)
+    print 'DONE!'
+    return tree_pointers, edge_left_pointers
+
+def build_tree_path_recurcive_less_mem(path, key,common_samples_array,tree_pointers, shift,min_len_key,f_key,f_path): #at first, send the window_size as a shift
+    '''
+      This function is called out of "stitch_tree_recurcive_less_mem"
+      Recurcive search of the tree
+      Write to file all possible pathes and keys in the tree (only the long enough)
+      ----Never run to the end because it is very long. the stack may be explode----
+      '''
     # write to filepossible pathes
     if len(tree_pointers[path[-1]]) == 0:  # there is an optional "next" node
         si = key + common_samples_array.iloc[path[-1]][-shift:]
@@ -1019,63 +1043,22 @@ def build_tree_path_less_mem(path, key,common_samples_array,tree_pointers, shift
         booli = True
         for node in tree_pointers[path[-1]]:
 
-
-
             if node['next'] not in path:
                 si = key + common_samples_array.iloc[path[-1]][-node['shift']:]
-                build_tree_path_less_mem(path + [node['next']],si,common_samples_array,tree_pointers, node['shift'],min_len_key,f_key,f_path)
+                build_tree_path_recurcive_less_mem(path + [node['next']],si,common_samples_array,tree_pointers, node['shift'],min_len_key,f_key,f_path)
             elif booli and len(path) >= min_len_key:
                 f_key.write(key + "\n")
                 f_path.write(path); f_path.write("\n")
         return
-
-def build_tree_path_iterative(path, key,common_samples_array,tree_pointers, shift,min_len_path,f_key,f_path,edge_left_pointers): #at first, send the window_size as a shift
- 
-    DFS_struct=[]
-    pathes=[]
-    for t in tree_pointers: #initiate DFS struct
-        DFS_struct.append({"last_step":-1,"next_step":-1,"shift":-1,"visited":False})
-    for root in edge_left_pointers:
-        stack, path = [root], []
-        while stack:
-            vertex = stack.pop()
-            path.append(vertex)
-            if  len(tree_pointers[vertex])==0: #end of path
-                if len(path)>=min_len_path:
-                    pathes.append(path)
-                rm=True
-                while(rm):
-                    last_in_path=path.pop()
-                    for node in tree_pointers[path[-1]]:
-                        if DFS_struct[node["next"]]["visited"] == False: 
-                            rm=False
-                    DFS_struct[last_in_path]["visited"] = False
-                    DFS_struct[last_in_path]["last_step"] = -1
-                continue
-            else:
-                DFS_struct[vertex]["visited"] = True
-                for neighbor in tree_pointers[vertex]:
-                    if DFS_struct[neighbor["next"]]["visited"]==True: #cycle
-                        if len(path) >= min_len_path:
-                            pathes.append(path)
-                        rm = True
-                        while (rm):
-                            v_pop = path.pop()
-                            for node in tree_pointers[path[-1]]:
-                                if DFS_struct[node["next"]]["visited"] == False:
-                                    rm = False
-                            DFS_struct[v_pop]["visited"] = False
-                            DFS_struct[v_pop]["last_step"] = -1
-                        continue
-                    stack.append(neighbor["next"])
-                    DFS_struct[neighbor["next"]]["last_step"]=vertex
-
-
-def stitch_tree_less_mem(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key):
+def stitch_tree_recurcive_less_mem(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key):
     '''
+    Recurcive stitch - with files - no threads.
+    The stack would not explode because the pathes are written to file
+    It works - but takes a lot of time
     traverse the tree pathes, starting from the root, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
     if there is no root, the largest cycle will be found
+    ----Never run to the end because it is very long. the stack may be explode----
     '''
 
     print "building tree path + stich..."
@@ -1090,15 +1073,199 @@ def stitch_tree_less_mem(common_samples_df, tree_pointers, edge_left_pointers,wi
     for idx, root in enumerate(edge_left_pointers):
         print idx
         if idx==1: break;
-        build_tree_path_less_mem([root],'',common_samples_df['sample'],tree_pointers, window_size,min_len_key, f_key, f_path) #key=''
+        build_tree_path_recurcive_less_mem([root],'',common_samples_df['sample'],tree_pointers, window_size,min_len_key, f_key, f_path) #key=''
     f_key.close()
     f_path.close()
 
-def stitch_tree_with_thread(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key):
+def build_tree_path_recurcive(path, key, tree_pointers, common_samples_array, retrieved_key, shift):
     '''
+    This function is called out of "stitch_tree_recurcive"
+    Recurcive search of the tree
+    Return an array of all the possible pathes in the tree (only the long enough)
+    retrieved_key- includes the options for a key
+    ----Never run to the end because it is very long. the stack may be explode----
+    '''
+    print path
+    if len(tree_pointers[path[-1]]) == 0:  # there is an optional "next" node
+        si = key[:-shift] + common_samples_array.iloc[path[-1]]#['sample']
+        retrieved_key.append(si)
+        return [path]
+    else:
+        a = []
+        booli = True
+        for node in tree_pointers[path[-1]]:
+            if node['next'] not in path:
+                si = key[:-node['shift']] + common_samples_array.iloc[path[-1]]#['sample']
+                a.extend(
+                    build_tree_path_recurcive(path + [node['next']], si, tree_pointers, common_samples_array, retrieved_key,
+                                         node['shift']))
+            elif booli:
+                a.append(path)
+                retrieved_key.append(key)
+                booli = False
+        return a
+def stitch_tree_recurcive(common_samples_df, tree_pointers, edge_left_pointers):
+    '''
+    call build_tree_path_recurcive function for each root
+    Return all the possible keys. Technically, the pathes are unused, but may be easier to work with lately.
+    ----Never run to the end because it is very long. the stack may be explode----
+    '''
+    print "building tree path + stich..."
+    if len(edge_left_pointers) == 0:
+        print 'no root'
+        return [];
+    pathes = []
+    retrieved_key = []
+    for root in edge_left_pointers:
+        a=build_tree_path_recurcive([root], '', tree_pointers, common_samples_df['sample'], retrieved_key,30)#len(common_samples_df[root]['sample']) - 1)
+        pathes.extend(a)
+    return retrieved_key
+
+
+#dont know if work
+def stitch_tree_iterative_no_thread(tree_pointers, edge_left_pointers,min_len_path): #at first, send the window_size as a shift
+    '''
+    stitch the tree itterativly (DFS)
+    ---never run to the end, dont know if work ----
+
+    notice: the min_len_path is compared to the path_len and not to the key_len
+    '''
+    pathes = []
+    DFS_visit_arr=[False]*len(tree_pointers) # initiate DFS struct
+    f_path=open("./key_candidates_pathes2","w");
+    for root in edge_left_pointers:
+        stack, path = [root], []
+        if len(pathes)>10000:
+            tow_dimarr2file(pathes,f_path)
+            pathes=[]
+        while stack:
+            vertex = stack.pop()
+            path.append(vertex)
+            DFS_visit_arr[vertex] = True
+            rm, booli = True, True
+
+            if len(tree_pointers[vertex])==0: #end of path
+                if len(path)>=min_len_path:
+                    pathes.append(copy.deepcopy(path))
+            else:
+                for neighbor in tree_pointers[vertex]:
+                    if DFS_visit_arr[neighbor["next"]]==True: #cycle
+                        if len(path) >= min_len_path and booli:
+                            pathes.append(copy.deepcopy(path))
+                            booli=False
+                    else:
+                        rm = False
+                        stack.append(neighbor["next"])
+
+            while (rm): #back in the DFS
+                popped_from_path = path.pop()
+                # check if all the children were there the path should be continued
+                if path:
+                    for node in tree_pointers[path[-1]]:
+                        if node["next"] in stack:
+                            rm= False
+                else: rm=False
+                DFS_visit_arr[popped_from_path] = False
+
+    tow_dimarr2file(pathes, f_path)
+
+def stitch_tree_iterative_thread(tree_pointers, edge_left_pointers,min_len_path,f_path,window_size): #at first, send the window_size as a shift
+    '''
+    called from stitch_tree_with_threads_iterative function
+    ---never run to the end, dont know if work ----
+
+    notice: the min_len_path is compared to the path_len and not to the key_len
+    '''
+    pathes = []
+    DFS_visit_arr=[False]*len(tree_pointers) # initiate DFS struct
+    for root in edge_left_pointers:
+        print root
+        stack, path = [root], []
+        if len(pathes)>300000:
+            tow_dimarr2file(pathes,f_path)
+            pathes=[]
+        while stack:
+            vertex = stack.pop()
+            path.append(vertex)
+
+            DFS_visit_arr[vertex] = True
+            rm, booli = True, True
+
+            if len(tree_pointers[vertex])==0: #end of path
+                if len(path) >= min_len_path:
+                    print path
+                    print len
+                    pathes.append(copy.deepcopy(path))
+
+            else:
+                for neighbor in tree_pointers[vertex]:
+                    if DFS_visit_arr[neighbor["next"]]==True: #cycle
+                        if len(path) >= min_len_path and booli:
+                            pathes.append(copy.deepcopy(path))
+                            booli=False
+                    else:
+                        rm = False
+                        stack.append(copy.deepcopy(neighbor["next"]))
+
+            while (rm): #back in the DFS
+                popped_from_path = path.pop()
+                # check if all the children were there the path should be continued
+                if path:
+                    for node in tree_pointers[path[-1]]:
+                        if node["next"] in stack:
+                            rm= False
+                else: rm=False
+                DFS_visit_arr[popped_from_path] = False
+
+    tow_dimarr2file(pathes, f_path)
+def stitch_tree_with_threads_iterative(tree_pointers, edge_left_pointers,window_size,min_len_path):
+    '''
+    stitch the tree itterativly (DFS) - with treads
+    ---never run to the end, dont know if work ----
+
+    notice: the min_len_path is compared to the path_len and not to the key_len
+    '''
+    print "building tree path + stich..."
+    len_20=len(edge_left_pointers)/20
+    threads = list()
+    files=list()
+    for i in range(20):
+        s=i*len_20
+        e=(i+1)*len_20
+        f=open("./pathes_"+str(i)+".txt","w")
+        files.append(f)
+        if i==19:
+            e= len_20-1
+        t = threading.Thread(target=stitch_tree_iterative_thread, kwargs={'tree_pointers': tree_pointers,
+                                                                  'edge_left_pointers': edge_left_pointers[s:e],
+                                                                  'min_len_path': min_len_path,
+                                                                  'f_path': f,
+                                                                   'window_size':window_size, })
+        threads.append(t)
+        t.start()
+
+    for idx,t in enumerate(threads):
+        t.join()
+        print "done: "+str(idx)
+        files[idx].close()
+
+def stitch_tree__recurcive_less_mem_thread(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key,f_key,f_path):
+    '''
+    Called from stitch_tree_recurcive_less_mem_with_thread
+    -----never run-----
+    '''
+
+    for idx, root in enumerate(edge_left_pointers):
+        a = build_tree_path_recurcive_less_mem([root], '', common_samples_df['sample'],tree_pointers, window_size,
+                                     min_len_key,f_key,f_path)
+def stitch_tree_recurcive_less_mem_with_thread(common_samples_df, tree_pointers, edge_left_pointers,window_size,min_len_key):
+    '''
+    with files + threads
     traverse the tree pathes, starting from the root, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
     if there is no root, the largest cycle will be found
+
+    -----never run-----
     '''
 
     print "building tree path + stich..."
@@ -1120,7 +1287,7 @@ def stitch_tree_with_thread(common_samples_df, tree_pointers, edge_left_pointers
         f_path=open("./key_pathes_"+str(i)+".txt","w")
         f_key_list.append(f_key)
         f_path_list.append(f_path)
-        t = threading.Thread(target=stitch_tree_less_mem_thread, kwargs={'common_samples_df': common_samples_df,
+        t = threading.Thread(target=stitch_tree__recurcive_less_mem_thread, kwargs={'common_samples_df': common_samples_df,
                                                                         'tree_pointers': tree_pointers,
                                                                         'edge_left_pointers': edge_left_pointers[i*len_10:end],
                                                                         'window_size': window_size,
@@ -1202,54 +1369,4 @@ def build_shift_pointers_yael_error_fixer(common_samples_array, stitch_shift_siz
                 break
     print 'DONE!'
     return shift_pointers
-#works, but not very efficiencive
-def build_shift_pointers_tree_noTreads(common_samples_df, stitch_shift_size,window_size):
-    '''
-    build tree where snippets are connected if they can be stitched by a small shift
-    !!! edge_left_pointers !!! is nnot necceraly fuul, cycles may be found
-    '''
-    common_samples_array = np.array(common_samples_df['sample'])
-    common_count_array = np.array(common_samples_df['count'])
 
-    tree_pointers = [[] for i in range(len(common_samples_array))]
-    edge_left_pointers = range(len(common_samples_array))
-
-    print 'building Tree no error fixing...'
-    '''
-     build array 2^window, and put counted value in each index correspend for the samples
-     for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard 
-    '''
-    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
-    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
-    saveIndexArray = np.zeros(len(common_samples_array),
-                              dtype=np.uint32)  # this array in to save the order of the samples in common_samples_array
-
-    for idx, sample in enumerate(common_samples_array):
-        b = BitArray(bin=sample)
-        all2PowerWindowArray[b.uint] = common_count_array[idx]
-        all2PowerWindowArray_idx[b.uint] = idx
-        saveIndexArray[idx] = b.uint
-
-    ''' now is the tree'''
-    for idx1 in xrange(len(saveIndexArray)):  # run over all the possible samples
-
-        if idx1 % 10000 == 0: print idx1
-        left_sample_number = saveIndexArray[idx1]
-        #left_sample = np.binary_repr(num=left_sample_number, width=window_size)
-        mask = 1
-        for stitch_shift in range(1, stitch_shift_size + 1):
-            temp = left_sample_number << stitch_shift  # shift the bit
-            temp &= ~(mask << window_size)
-            mask = (mask << 1) + 1
-
-            for j in xrange(2 ** stitch_shift):
-                if (all2PowerWindowArray[temp + j] > 0) and (left_sample_number != (temp + j)):
-                    #right_sample = np.binary_repr(num=temp + j, width=window_size)
-                    #idx2 = np.where(saveIndexArray == BitArray(bin=right_sample).uint)[0]
-                    idx2 = all2PowerWindowArray_idx[temp + j]
-                    tree_pointers[idx1].append({'next': idx2,
-                                                'shift': stitch_shift})
-                    if idx2 in edge_left_pointers:
-                        edge_left_pointers.remove(idx2)
-    print 'DONE!'
-    return tree_pointers, edge_left_pointers
