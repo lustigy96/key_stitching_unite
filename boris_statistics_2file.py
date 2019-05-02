@@ -95,8 +95,9 @@ if __name__ == "__main__":
                                         if COMPRAE_GUBI_AND_MY:
                                             shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df,
                                                                                                       stitch_shift_size)
-                                            func.compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi)
-                                            sys.exit(1)
+                                            r = func.compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi)
+                                            if r == False:
+                                                sys.exit(1)
 
                                         retrieved_key = func.stitch(common_samples_df, shift_pointers_Boris)
                                         candidate_key = max(retrieved_key, key=len)
@@ -199,8 +200,9 @@ if __name__ == "__main__":
                             if COMPRAE_GUBI_AND_MY:
                                 shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df,
                                                                                           stitch_shift_size)
-                                func.compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi)
-                                sys.exit(1)
+                                r = func.compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi)
+                                if r==False:
+                                    sys.exit(1)
 
                             retrieved_key = func.stitch(common_samples_df, shift_pointers_Boris)
                             candidate_key = max(retrieved_key, key=len)
