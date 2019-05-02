@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 # import matplotlib.pyplot as plt
 import os
-
+import sys
 from bitstring import BitArray
 
 import operator as op
@@ -18,8 +18,8 @@ if __name__ == "__main__":
     GABI_SLOW = False
     MY_FAST = True
 
-    SHIFT_POINTERS_METHOD = "count" #"position"     # yael dont touch this..
-    COMPRAE_GUBI_AND_MY = False                     # yael dont touch this..
+    SHIFT_POINTERS_METHOD = "position" #"position"     # yael dont touch this..
+    COMPRAE_GUBI_AND_MY = True                     # yael dont touch this..
     ALLOW_CYCLES = False                            # yael dont touch this..
 
     # hex_key_2048="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e70f808182838485868788898a8b8c8d8e8909192939495969798999a9b9c9d9e91a0a1a2a3a4a5a6a7a8a9aaabacadaea1b0b1b2b3b4b5b6b7b8b9babbbcbdbeb1c0c1c2c3c4c5c6c7c8c9cacbcccdcec1"
@@ -36,23 +36,18 @@ if __name__ == "__main__":
     except:
         None
 
-
     print "\n\n~~Start Gabi Algorithem...~~\n\n"
 
 
-
-
-
-
     if SIMULATION:
-        key_length_list = [512, 1024, 2048]
+        key_length_list = [512]
         sample_len_list = [50]#[50, 60, 70, 80, 100]
-        window_list = [19, 20, 21, 22,24,27,28,29,30]
-        quantile_list = [0.3, 0.4,0.5]
-        num_constant_list = [100]
+        window_list = [15, 19]
+        quantile_list = [0.5]
+        num_constant_list = [1]
         stitch_list = [1]
 
-        for bol in [False]:
+        for bol in [True]:
             ALLOW_CYCLES = bol
             for key_length_value in key_length_list:
                 for window_size_value in window_list:
@@ -80,7 +75,7 @@ if __name__ == "__main__":
                                     num_samples = num_constant * (n - sample_len) * (sample_len - window_size)
                                     print "num_samples = {}".format(num_samples)
                                     result_df = func.build_samples(key, num_samples, sample_len, window_size, flip_probability, delete_probability,
-                                                              insert_probability)
+                                                              insert_probability, n)
 
                                     common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
                                     print "result_df = " + str(len(result_df))
@@ -89,15 +84,16 @@ if __name__ == "__main__":
                                     if MY_FAST:
                                         summryMy = open("./results/summryMy_key={0}_allowCycle={1}_shiftPointersMethod={2}_windowSize={3}_simulation={4}.txt".format(n,ALLOW_CYCLES, SHIFT_POINTERS_METHOD, window_size,SIMULATION),"a+")
                                         if SHIFT_POINTERS_METHOD == "count":
-                                            shift_pointers = func.build_shift_pointers_noorder(common_samples_df, stitch_shift_size, ALLOW_CYCLES)
+                                            shift_pointers_Boris = func.build_shift_pointers_noorder(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
                                         if SHIFT_POINTERS_METHOD == "position":
-                                                shift_pointers = func.build_shift_pointers_position(common_samples_df, stitch_shift_size, ALLOW_CYCLES)
+                                            shift_pointers_Boris = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
                                         if COMPRAE_GUBI_AND_MY:
-                                            shift_pointers2 = func.build_shift_pointers3(common_samples_df, stitch_shift_size, ALLOW_CYCLES)
-                                            func.compareGabiAndMe(shift_pointers, shift_pointers2)
-
-                                        retrieved_key = func.stitch(common_samples_df, shift_pointers)
+                                            shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
+                                            func.compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi)
+                                            sys.exit(1)
+                                
+                                        retrieved_key = func.stitch(common_samples_df, shift_pointers_Boris)
                                         candidate_key = max(retrieved_key, key=len)
 
                                         string = "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~\nMY_FAST = " + str(MY_FAST)
