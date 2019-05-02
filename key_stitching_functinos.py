@@ -443,71 +443,10 @@ def validate_sample(sample, near_sample_df, radius):
     #            print sample['sample']
     #            print near_sample, len(match_array), '\n'
     return min(sample_count)
-#Gabi method with samll optimization to make if faster but much more memory - USING NUMPY'''
-def build_shift_pointers_gabi_pure_using_numpy(common_samples_df, stitch_shift_size):
-    '''
-    build DAG where snippets are connected if they can be stitched by a small shift
-    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
-    '''
-    common_samples_array = np.array(common_samples_df['sample'])
-    common_count_array = np.array(common_samples_df['count'])
 
-    print 'building DAG...'
-    shift_pointers = {'right_index': {}, 'left_index': {}}
-    right_index = None
-    left_index = None
-    '''this part is to test if gabi and my optimization give the same reasults'''
-    for idx1, left_sample in enumerate(common_samples_array):
-        if idx1 % 100 == 0:
-            print idx1
-
-        for stitch_shift in range(1, stitch_shift_size + 1):
-            #            print 'stitch_shift %d' % stitch_shift
-            for idx2, right_sample in enumerate(common_samples_array):
-                #                print idx2, sample2
-
-                if hamming_dist(left_sample[stitch_shift:], right_sample[:-stitch_shift]) == 0:
-                    if not right_index:
-                        right_index = np.array([right_sample])
-                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
-                                                                        'left_sample': left_sample,
-                                                                        'shift': stitch_shift}
-                    elif not np.any(right_index == right_sample):
-                        np.append(right_index, right_sample)
-                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
-                                                                        'left_sample': left_sample,
-                                                                        'shift': stitch_shift}
-                    if not left_index:
-                        left_index = np.array([left_sample])
-                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                      'left_sample': left_sample, 'shift': stitch_shift}
-                    elif not np.any(left_index == left_sample):
-                        np.append(left_index, left_sample)
-                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                      'left_sample': left_sample, 'shift': stitch_shift}
-                    break_stitch_shift_loop = True
-                    break
-            if break_stitch_shift_loop:
-                break
-    print 'DONE!'
-
-    # for left_sample in shift_pointers['left_index']:
-    #     right_sample = shift_pointers['left_index'][left_sample]['right_sample']
-    #
-    #     if left_sample != shift_pointers['right_index'][right_sample]['left_sample']:
-    #         print shift_pointers['left_index'][left_sample]
-    #         print shift_pointers['right_index'][right_sample]
-    #         print "somthig worng 1"
-    #
-    # for right_sample in shift_pointers['right_index']:
-    #     left_sample = shift_pointers['right_index'][right_sample]['left_sample']
-    #
-    #     if right_sample != shift_pointers['left_index'][left_sample]['right_sample']:
-    #         print shift_pointers['left_index'][left_sample]
-    #         print shift_pointers['right_index'][right_sample]
-    #         print "somthig worng 2"
-
-    return shift_pointers
+	
+	
+	
 def stitch(common_samples_df, shift_pointers):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
@@ -579,6 +518,9 @@ def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_leng
         if not cycle_break:
             retrieved_key += [curr_key]
     return retrieved_key
+	
+	
+	
 def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
@@ -659,117 +601,20 @@ def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size
 
     return shift_pointers
 #debug
-def compareGabiAndMe(shift_pointers, shift_pointers2):
-    '''this part is to test if gabi and my optimization give the same reasults'''
-    # test this:
-    gabi_left_index = np.array(shift_pointers2['left_index'].keys())
-    print len(gabi_left_index)
-    my_left_index = np.array(shift_pointers['left_index'].keys())
-    print len(my_left_index)
 
-    gabi_right_index = np.array(shift_pointers2['right_index'].keys())
-    print len(gabi_right_index)
-    my_right_index = np.array(shift_pointers['right_index'].keys())
-    print len(my_right_index)
 
-    # debug part to test if gabi dict are as my after optiomizations:
 
-    for sample in shift_pointers2['left_index'].keys():
-        if sample not in shift_pointers['left_index']:
-            print "error left_index"
 
-    for sample in shift_pointers2['right_index'].keys():
-        if sample not in shift_pointers['right_index']:
-            print "error right_index"
 
-    # debug part to test if my dicts after optiomizations are as gabi dict :
-    for sample in shift_pointers['left_index'].keys():
-        if sample not in shift_pointers2['left_index']:
-            print "error left_index"
 
-    for sample in shift_pointers['right_index'].keys():
-        if sample not in shift_pointers2['right_index']:
-            print "error right_index"
-def build_shift_pointers_noorder(common_samples_df, stitch_shift_size, window_size,allowCycle=False):
-    '''
-    build DAG where snippets are connected if they can be stitched by a small shift
-    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
-    '''
-    common_samples_array = np.array(common_samples_df['sample'])
-    common_count_array = np.array(common_samples_df['count'])
 
-    print 'building DAG...'
-    shift_pointers = {'right_index': {}, 'left_index': {}}
 
-    '''************************************************************************************
-    # build array 2^window, and put counted value in each index correspend for the samples
-    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard '''
 
-    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
-    for idx, sample in enumerate(common_samples_array):
-        b = BitArray(bin=sample)
-        all2PowerWindowArray[b.uint] = common_count_array[idx]
 
-    # debug:
-    # print len(all2PowerWindowArray[all2PowerWindowArray == True])
-    # print len(common_samples_array)
-    # if len(common_samples_array)!=len(all2PowerWindowArray[all2PowerWindowArray == True]):
-    #     print "[build_shift_pointers]: Error the len of all2PowerWindowArray not as common_samples_array"
-    '''************************************************************************************'''
 
-    for left_sample_index in xrange(2 ** window_size):  # run over all the order of the samples
-        if left_sample_index % 500 == 0:
-            print "common_samples_array = " + str(left_sample_index)
 
-        if (all2PowerWindowArray[left_sample_index] > 0):
-            count_of_left_sample = all2PowerWindowArray[left_sample_index]
-            left_sample = np.binary_repr(num=left_sample_index, width=window_size)
 
-            for stitch_shift in range(1, stitch_shift_size + 1):
-                # shift the bit
-                temp = left_sample_index << stitch_shift
-                # if the shift left excteds number of bits then we should remove the msb
-                for i in reversed(range(stitch_shift)):
-                    if temp >= 2 ** (window_size + i):
-                        temp = temp - 2 ** (window_size + i)
-                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                count_of_right_sample = 0
-                for j in xrange(2 ** stitch_shift):
-                    if (all2PowerWindowArray[temp + j] > count_of_right_sample) and (left_sample_index != (temp + j)):
-                        count_of_right_sample = all2PowerWindowArray[temp + j]
-                        right_sample = np.binary_repr(num=temp + j, width=window_size)
-
-                if count_of_right_sample != 0:
-                    if right_sample not in shift_pointers['right_index']:
-                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
-                                                                       'left_sample': left_sample,
-                                                                       'shift': stitch_shift,
-                                                                       #'used': False,
-                                                                       #'right_count': count_of_right_sample,
-                                                                       #'left_count': count_of_left_sample
-                                                                       }
-                        if not allowCycle:
-                            shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                         'left_sample': left_sample,
-                                                                         'shift': stitch_shift,
-                                                                         #'used': False,
-                                                                         #'right_count': count_of_right_sample,
-                                                                         #'left_count': count_of_left_sample
-                                                                         }
-                    if allowCycle:
-                        if left_sample not in shift_pointers['left_index']:
-                            shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                         'left_sample': left_sample,
-                                                                         'shift': stitch_shift,
-                                                                         #'used': False,
-                                                                         #'right_count': count_of_right_sample,
-                                                                         #'left_count': count_of_left_sample
-                                                                         }
-    print 'DONE!'
-
-    return shift_pointers
-#My diffrent approch optimization - dont use this
-def build_shift_pointers_position(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
+def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -784,110 +629,175 @@ def build_shift_pointers_position(common_samples_df, stitch_shift_size, window_s
     # build array 2^window, and put counted value in each index correspend for the samples
     # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
     all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
-    orderArray = np.zeros(len(common_samples_array),
-                          dtype=np.uint32)  # this array in to save the order of the samples in common_samples_array
-    i = 0
+    orderArrayMaxToMin = np.zeros(len(common_samples_array), dtype=np.uint32)
+    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
+
     for idx, sample in enumerate(common_samples_array):
         b = BitArray(bin=sample)
         all2PowerWindowArray[b.uint] = common_count_array[idx]
-        orderArray[i] = b.uint
-        i += 1
+        all2PowerWindowArray_idx[b.uint] = idx
+        orderArrayMaxToMin[idx] = b.uint
 
-    # debug:
-    # print len(all2PowerWindowArray[all2PowerWindowArray == True])
-    # print len(common_samples_array)
-    # if len(common_samples_array)!=len(all2PowerWindowArray[all2PowerWindowArray == True]):
-    #     print "[build_shift_pointers]: Error the len of all2PowerWindowArray not as common_samples_array"
+    idxMax = len(common_samples_array) + 1
     '''************************************************************************************'''
 
     for i in xrange(len(common_samples_array)):  # run over all the order of the samples
-        left_sample_index = orderArray[i]
+        left_sample_index = orderArrayMaxToMin[i]
         if i % 500 == 0:
-            print "common_samples_array = " + str(i)
+            print "i = {0}".format(i)
 
         if (all2PowerWindowArray[left_sample_index] > 0):
-            count_of_left_sample = all2PowerWindowArray[left_sample_index]
-            left_sample = np.binary_repr(num=left_sample_index, width=window_size)
-
-            # if '10010001111100100100' == left_sample or '00010001111100100100' == left_sample:
-            #     print "diffrent right_sample"
+            left_sample = common_samples_array[all2PowerWindowArray_idx[left_sample_index]]
+            if left_sample == "001001110111111":
+                print "debug"
+            mask = 1
             for stitch_shift in range(1, stitch_shift_size + 1):
-                # shift the bit
-                temp = left_sample_index << stitch_shift
-                # if the shift left exted number of bits then we should remove the msb
-                for i in reversed(range(stitch_shift)):
-                    if temp >= 2 ** (window_size + i):
-                        temp = temp - 2 ** (window_size + i)
-                # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                position = len(common_samples_array) +1
-                jj=0
-                right_sample_index = -1
+                temp = left_sample_index << stitch_shift  # shift the bit
+                temp &= ~(mask << window_size)
+                mask = (mask << 1) + 1
+
+                right_sample_idx = idxMax
                 for j in xrange(2 ** stitch_shift):
-                    if (all2PowerWindowArray[temp + j] > 0) and (left_sample_index != (temp + j)):
+                    if (all2PowerWindowArray[temp + j] > 0):
+                        if (all2PowerWindowArray_idx[temp + j] < right_sample_idx):
+                            right_sample_idx = all2PowerWindowArray_idx[temp + j]
+                            right_sample_index = temp + j
 
-                        if (np.where(orderArray == (temp + j))[0][0] <= position):
-                            position = np.where(orderArray == (temp + j))[0][0]
-                            right_sample_index = (temp + j)
-                            count_of_right_sample = all2PowerWindowArray[temp + j]
-                            right_sample = np.binary_repr(num=right_sample_index, width=window_size)
-
-                if right_sample_index != -1:
+                if right_sample_idx != idxMax:
+                    right_sample = common_samples_array[all2PowerWindowArray_idx[right_sample_index]]
                     if right_sample not in shift_pointers['right_index']:
                         shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
                                                                        'left_sample': left_sample,
-                                                                       'shift': stitch_shift,
-                                                                       }
-                        if not allowCycle:
-                            shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                         'left_sample': left_sample,
-                                                                         'shift': stitch_shift,
-                                                                         # 'used': False,
-                                                                         # 'right_count': count_of_right_sample,
-                                                                         # 'left_count': count_of_left_sample
-                                                                         }
-                    if allowCycle:
-                        if left_sample not in shift_pointers['left_index']:
-                            shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                         'left_sample': left_sample,
-                                                                         'shift': stitch_shift,
-                                                                         # 'used': False,
-                                                                         # 'right_count': count_of_right_sample,
-                                                                         # 'left_count': count_of_left_sample
-                                                                         }
-                    break_stitch_shift_loop = True
+                                                                       'shift': stitch_shift}
+
+                    if left_sample not in shift_pointers['left_index']:
+                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
+                                                                     'left_sample': left_sample, 'shift': stitch_shift}
                     break
+
     print 'DONE!'
-
-    # for left_sample in shift_pointers['left_index']:
-    #     right_sample = shift_pointers['left_index'][left_sample]['right_sample']
-    #
-    #     if left_sample != shift_pointers['right_index'][right_sample]['left_sample']:
-    #         print shift_pointers['left_index'][left_sample]
-    #         print shift_pointers['right_index'][right_sample]
-    #         print "somthig worng 1"
-    #
-    # for right_sample in shift_pointers['right_index']:
-    #     left_sample = shift_pointers['right_index'][right_sample]['left_sample']
-    #
-    #     if right_sample != shift_pointers['left_index'][left_sample]['right_sample']:
-    #         print shift_pointers['left_index'][left_sample]
-    #         print shift_pointers['right_index'][right_sample]
-    #         print "somthig worng 2"
-
-    # cycle problem:
-    # left_sample
-    # '10010001111100100100'
-    # right_sample
-    # '00100011111001001000'
-    # shift_pointers['left_index'][left_sample]
-    # {'shift': 1, 'left_sample': '10010001111100100100', 'right_sample': '00100011111001001000', 'used': False}
-    # shift_pointers['right_index'][right_sample]
-    # {'shift': 1, 'left_sample': '00010001111100100100', 'right_sample': '00100011111001001000', 'used': False}
-    # shift_pointers['right_index']['00100011111001001000']
-    # {'shift': 1, 'left_sample': '00010001111100100100', 'right_sample': '00100011111001001000', 'used': False}
     return shift_pointers
 
-'''YAEL'''
+
+# debug
+def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
+    '''this part is to test if gabi and my optimization give the same reasults'''
+    # test this:
+    print "[INFO][compareGabiAndMe]: START COMPRAED BORIS AND GABI! "
+    if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(
+            np.array(shift_pointers_Boris['left_index'].keys())):
+        print "[ERROR][compareGabiAndMe][left_index]: len boris different len gabi"
+        sys.exit(1)
+
+    if len(np.array(shift_pointers_Gabi['right_index'].keys())) != len(
+            np.array(shift_pointers_Boris['right_index'].keys())):
+        print "[ERROR][compareGabiAndMe][right_index]: len boris different len gabi"
+        sys.exit(1)
+
+    threads = []
+    for threadNum in xrange(4):
+        t = threading.Thread(target=compareGabiAndMeCase, args=(shift_pointers_Boris, shift_pointers_Gabi, threadNum))
+        threads.append(t)
+        t.start()
+
+    for thread in threads:
+        thread.join()
+
+    print "[INFO][SUCCESS][compareGabiAndMe]: DONE! "
+
+
+def compareGabiAndMeCase(shift_pointers_Boris, shift_pointers_Gabi, case):
+    '''this part is to test if gabi and my optimization give the same reasults'''
+    # test this:
+    if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(
+            np.array(shift_pointers_Boris['left_index'].keys())):
+        print "[ERROR][compareGabiAndMe][left_index]: len boris different len gabi"
+        sys.exit(1)
+
+    if len(np.array(shift_pointers_Gabi['right_index'].keys())) != len(
+            np.array(shift_pointers_Boris['right_index'].keys())):
+        print "[ERROR][compareGabiAndMe][right_index]: len boris different len gabi"
+        sys.exit(1)
+
+    if case == 1:
+        # debug part to test if gabi dict are as my after optiomizations:
+        for sample in shift_pointers_Boris['left_index'].keys():
+            if sample not in shift_pointers_Gabi['left_index']:
+                print "[ERROR][compareGabiAndMe][left_index]: boris have sample which gabi doesnt"
+                sys.exit(1)
+            else:
+                if shift_pointers_Boris['left_index'][sample]['right_sample'] != \
+                        shift_pointers_Gabi['left_index'][sample]['right_sample']:
+                    print "[ERROR][compareGabiAndMe][left_index]: boris peers and gabi are different"
+                    sys.exit(1)
+    if case == 2:
+        for sample in shift_pointers_Boris['right_index'].keys():
+            if sample not in shift_pointers_Gabi['right_index']:
+                print "[ERROR][compareGabiAndMe][right_index]: boris have sample which gabi doesnt"
+                sys.exit(1)
+            else:
+                if shift_pointers_Boris['right_index'][sample]['left_sample'] != \
+                        shift_pointers_Gabi['right_index'][sample]['left_sample']:
+                    print "[ERROR][compareGabiAndMe][right_index]: boris peers and gabi are different"
+                    sys.exit(1)
+
+    if case == 3:
+        # debug part to test if my dicts after optiomizations are as gabi dict :
+        for sample in shift_pointers_Gabi['left_index'].keys():
+            if sample not in shift_pointers_Boris['left_index']:
+                print "[ERROR][compareGabiAndMe][left_index]: gabi have sample which boris doesnt"
+                sys.exit(1)
+            else:
+                if shift_pointers_Gabi['left_index'][sample]['right_sample'] != \
+                        shift_pointers_Boris['left_index'][sample]['right_sample']:
+                    print "[ERROR][compareGabiAndMe][left_index]: boris peers and gabi are different"
+                    sys.exit(1)
+
+    if case == 4:
+        for sample in shift_pointers_Gabi['right_index'].keys():
+            if sample not in shift_pointers_Boris['right_index']:
+                print "[ERROR][compareGabiAndMe][right_index]: gabi have sample which boris doesnt"
+                sys.exit(1)
+            else:
+                if shift_pointers_Boris['right_index'][sample]['left_sample'] != \
+                        shift_pointers_Gabi['right_index'][sample]['left_sample']:
+                    print "[ERROR][compareGabiAndMe][right_index]: gabi peers and boris are different"
+                    sys.exit(1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 '''YAEL'''
 def tow_dimarr2file(pathes,f_path):
     for p in pathes:
