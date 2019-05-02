@@ -180,7 +180,8 @@ if __name__ == "__main__":
                         p_list = []
                         p_list.append(path)
                         # pathlist.append(path2)
-                        result_df = func.build_samples_from_file(p_list=p_list, window_size=window_size, sample_start=0, sample_end=100000)
+                        result_dict ={}
+                        result_df, result_dict = func.build_samples_from_file(p_list=p_list, window_size=window_size, sample_start=0, sample_end=100000, result_dict=result_dict)
 
                         common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
                         print "result_df = " + str(len(result_df))
