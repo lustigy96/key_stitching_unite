@@ -9,7 +9,7 @@ import os
 import operator as op
 from functools import reduce
 from bitstring import BitArray
-
+import sys
 
 
 hex2bin_map = {
