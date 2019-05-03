@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     key_length_vec = [512,1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
-    megic_num_vec = [10, 25, 50,100,150]
+    megic_num_vec = [10, 25, 50, 100, 150]
     stitch_vec = [1]
     window_size_vec=[20,30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
@@ -99,6 +99,9 @@ if __name__ == "__main__":
             string = "\nmegic_num = " + str(megic_num) + \
                      "\nsample_len = " + str(sample_len) + \
                      "\nsamples_num = megic_num * (key_length - sample_len) * (sample_len - window_size) = " + str(samples_num) + \
+                     "\nflip_probability = " + str(flip_probability) + \
+                     "\ninsert_probability = " + str(insert_probability) + \
+                     "\ndelete_probability = " + str(delete_probability) + \
                      "\nresult_df = " + str(len(result_df)) + \
                      "\ncommon_samples_df quantile = " + str(quantile) + \
                      "\ncommon_samples_df = " + str(len(common_samples_df)) + \
