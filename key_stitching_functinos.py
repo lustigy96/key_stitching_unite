@@ -688,15 +688,15 @@ def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
     if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(
             np.array(shift_pointers_Boris['left_index'].keys())):
         print "[ERROR][compareGabiAndMe][left_index]: len boris different len gabi"
-        # sys.exit(1)
-        resultCompareGabiAndMe = False
-        return resultCompareGabiAndMe
+        sys.exit(1)
+        # resultCompareGabiAndMe = False
+        # return resultCompareGabiAndMe
 
-    if len(np.array(shift_pointers_Gabi['right_index'].keys())) != len(
-            np.array(shift_pointers_Boris['right_index'].keys())):
+    if len(np.array(shift_pointers_Gabi['right_index'].keys())) != len(np.array(shift_pointers_Boris['right_index'].keys())):
         print "[ERROR][compareGabiAndMe][right_index]: len boris different len gabi"
-        resultCompareGabiAndMe = False
-        return resultCompareGabiAndMe
+        sys.exit(1)
+        # resultCompareGabiAndMe = False
+        # return resultCompareGabiAndMe
 
     threads = []
     for threadNum in xrange(4):
@@ -708,7 +708,7 @@ def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
         thread.join()
 
     print "[INFO][compareGabiAndMe][RESULT={0}]: DONE! ".format(resultCompareGabiAndMe)
-    return resultCompareGabiAndMe
+    return True
 
 
 def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
@@ -717,47 +717,47 @@ def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
     if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(
             np.array(shift_pointers_Boris['left_index'].keys())):
         print "[ERROR][compareGabiAndMe][left_index]: len boris different len gabi"
-        # sys.exit(1)
-        resultCompareGabiAndMe = False
-        return resultCompareGabiAndMe
+        sys.exit(1)
+        # resultCompareGabiAndMe = False
+        # return resultCompareGabiAndMe
 
 
     if len(np.array(shift_pointers_Gabi['right_index'].keys())) != len(
             np.array(shift_pointers_Boris['right_index'].keys())):
         print "[ERROR][compareGabiAndMe][right_index]: len boris different len gabi"
-        # sys.exit(1)
-        resultCompareGabiAndMe = False
-        return resultCompareGabiAndMe
+        sys.exit(1)
+        # resultCompareGabiAndMe = False
+        # return resultCompareGabiAndMe
 
     if case == 1:
         # debug part to test if gabi dict are as my after optiomizations:
         for sample in shift_pointers_Boris['left_index'].keys():
             if sample not in shift_pointers_Gabi['left_index']:
                 print "[ERROR][compareGabiAndMe][left_index]: boris have sample which gabi doesnt"
-                # sys.exit(1)
-                resultCompareGabiAndMe = False
-                return resultCompareGabiAndMe
+                sys.exit(1)
+                # resultCompareGabiAndMe = False
+                # return resultCompareGabiAndMe
             else:
                 if shift_pointers_Boris['left_index'][sample]['right_sample'] != \
                         shift_pointers_Gabi['left_index'][sample]['right_sample']:
                     print "[ERROR][compareGabiAndMe][left_index]: boris peers and gabi are different"
-                    # sys.exit(1)
-                    resultCompareGabiAndMe = False
-                    return resultCompareGabiAndMe
+                    sys.exit(1)
+                    # resultCompareGabiAndMe = False
+                    # return resultCompareGabiAndMe
     if case == 2:
         for sample in shift_pointers_Boris['right_index'].keys():
             if sample not in shift_pointers_Gabi['right_index']:
                 print "[ERROR][compareGabiAndMe][right_index]: boris have sample which gabi doesnt"
-                # sys.exit(1)
-                resultCompareGabiAndMe = False
-                return resultCompareGabiAndMe
+                sys.exit(1)
+                # resultCompareGabiAndMe = False
+                # return resultCompareGabiAndMe
             else:
                 if shift_pointers_Boris['right_index'][sample]['left_sample'] != \
                         shift_pointers_Gabi['right_index'][sample]['left_sample']:
                     print "[ERROR][compareGabiAndMe][right_index]: boris peers and gabi are different"
-                    # sys.exit(1)
-                    resultCompareGabiAndMe = False
-                    return resultCompareGabiAndMe
+                    sys.exit(1)
+                    # resultCompareGabiAndMe = False
+                    # return resultCompareGabiAndMe
 
     if case == 3:
         # debug part to test if my dicts after optiomizations are as gabi dict :
@@ -779,16 +779,16 @@ def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
         for sample in shift_pointers_Gabi['right_index'].keys():
             if sample not in shift_pointers_Boris['right_index']:
                 print "[ERROR][compareGabiAndMe][right_index]: gabi have sample which boris doesnt"
-                # sys.exit(1)
-                resultCompareGabiAndMe = False
-                return resultCompareGabiAndMe
+                sys.exit(1)
+                # resultCompareGabiAndMe = False
+                # return resultCompareGabiAndMe
             else:
                 if shift_pointers_Boris['right_index'][sample]['left_sample'] != \
                         shift_pointers_Gabi['right_index'][sample]['left_sample']:
                     print "[ERROR][compareGabiAndMe][right_index]: gabi peers and boris are different"
-                    # sys.exit(1)
-                    resultCompareGabiAndMe = False
-                    return resultCompareGabiAndMe
+                    sys.exit(1)
+                    # resultCompareGabiAndMe = False
+                    # return resultCompareGabiAndMe
 
 
 
