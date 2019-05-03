@@ -39,8 +39,9 @@ if __name__ == "__main__":
 
 
     f_data=open("./results/data.txt","w")
-    f_data.write(' '.join(quantile_vec))
-    f_data.write(' '.join(samples_num_vec))
+
+    f_data.write(' '.join(map(str,quantile_vec)))
+    f_data.write(' '.join(map(str,samples_num_vec)))
 
     for quantile in quantile_vec:
         for samples_num in samples_num_vec:
