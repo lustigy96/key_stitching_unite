@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     window_size_vec=[20,30] #each has its own graph
     quantile_vec=[0.3,0.5,0.7] #each has its own graph
-    samples_num_vec=[100000, 200000, 300000] #bars section
+    samples_num_vec=[1000]#[1000, 200000, 300000] #bars section
     start_samp=0
     result_dict={}
     ALLOW_CYCLES = True
@@ -41,8 +41,9 @@ if __name__ == "__main__":
     f_data=open("./results/data.txt","w")
 
     f_data.write(' '.join(map(str,quantile_vec)))
+    f_data.write('\n')
     f_data.write(' '.join(map(str,samples_num_vec)))
-
+    f_data.write('\n')
     for quantile in quantile_vec:
         for samples_num in samples_num_vec:
             summryMy = open("./results/summryMy_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION), "a+")
@@ -52,9 +53,9 @@ if __name__ == "__main__":
             p_list.append(path)
             result_df, result_dict = func.build_samples_from_file(p_list=p_list, window_size=window_size, sample_start=start_samp, sample_end=samples_num, result_dict=result_dict)
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
-            shift_pointers_Boris = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
+            shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
-            retrieved_key = func.stitch(common_samples_df, shift_pointers_Boris)
+            retrieved_key = func.stitch_boris(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
             candidate_key = max(retrieved_key, key=len)
 
             ## print results conclusion to file

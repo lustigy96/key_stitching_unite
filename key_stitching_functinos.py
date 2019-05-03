@@ -444,9 +444,9 @@ def validate_sample(sample, near_sample_df, radius):
     #            print near_sample, len(match_array), '\n'
     return min(sample_count)
 
-	
-	
-	
+
+
+
 def stitch(common_samples_df, shift_pointers):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
@@ -477,7 +477,7 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''BORIS'''
-def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_length=2048):
+def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 ):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
@@ -485,6 +485,11 @@ def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_leng
     '''
     #    shift_pointers_right_index_df = pd.DataFrame(shift_pointers['right_index']).transpose()
     #    shift_pointers_left_index_df = pd.DataFrame(shift_pointers['left_index']).transpose()
+
+    common_samples_array = np.array(common_samples_df['sample'])
+
+
+
     start_samples = []
     for sample in common_samples_array:
         if sample not in shift_pointers['right_index']:
@@ -494,33 +499,42 @@ def stitch_boris(common_samples_array, shift_pointers, allowCycle=False,key_leng
     for start_sample in start_samples:
         print 'START SAMPLE: ' + start_sample
         curr_sample = start_sample
-        cycle_break = False
+        cycle_break = not allowCycle
+
+        b = BitArray(bin=start_sample)
+        path=[all2PowerWindowArray_idx[b.uint]]
+
 
         curr_key = curr_sample
         total_shift = 0
         curr_key_list = np.array([start_sample])
+
         while curr_sample in shift_pointers['left_index']:
             cycle_break = False
             curr_sample_right_neighbor_dict = shift_pointers['left_index'][curr_sample]
             curr_sample_right_neighbor = curr_sample_right_neighbor_dict['right_sample']
-            curr_sample_right_neighbor_to_add = curr_sample_right_neighbor[
-                                                -shift_pointers['left_index'][curr_sample]['shift']:]
+            curr_sample_right_neighbor_to_add = curr_sample_right_neighbor[-shift_pointers['left_index'][curr_sample]['shift']:]
             curr_key += curr_sample_right_neighbor_to_add
             total_shift += shift_pointers['left_index'][curr_sample]['shift']
             curr_sample = curr_sample_right_neighbor
+            b = BitArray(bin=curr_sample)
+            if all2PowerWindowArray_idx[b.uint] in path:
+                break
+            else:
+                path.append(all2PowerWindowArray_idx[b.uint])
 
 
-            if len(curr_key) >= 3 * key_length:
-                print "[Worning]: probably cycle!!"
-                if not allowCycle:
-                    cycle_break = True
-                    break
+            # if len(curr_key) >= 3 * key_length:
+            #     print "[Worning]: probably cycle!!"
+            #     if not allowCycle:
+            #         cycle_break = True
+            #         break
         if not cycle_break:
             retrieved_key += [curr_key]
     return retrieved_key
-	
-	
-	
+
+
+
 def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
@@ -676,7 +690,7 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
                     break
 
     print 'DONE!'
-    return shift_pointers
+    return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
 
 
 # debug
