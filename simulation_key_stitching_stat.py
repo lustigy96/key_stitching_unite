@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     key_length_vec = [512,1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
-    megic_num_vec = [50,80,100,150,200]
+    megic_num_vec = [10, 25, 50,100,150]
     stitch_vec = [1]
     window_size_vec=[20,30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
