@@ -476,7 +476,7 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''BORIS'''
-def build_samples_better(key, sample_start, num_samples, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
+def build_samples_better(key, sample_start, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
     '''
