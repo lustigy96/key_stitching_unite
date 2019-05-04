@@ -482,7 +482,7 @@ def build_samples_better(key, sample_start, sample_end, sample_len, window_size,
     '''
     print 'building samples...'
     n = len(key)
-    for sample_idx in xrange(sample_start, num_samples):
+    for sample_idx in xrange(sample_start, sample_end):
         if sample_idx % 1000 == 0:
             print sample_idx
         sample_start = np.random.randint(n - sample_len + 1)
