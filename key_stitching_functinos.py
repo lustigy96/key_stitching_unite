@@ -292,6 +292,7 @@ def build_samples(key, num_samples, sample_len, window_size, flip_probability, d
     print 'DONE!'
     return result_df
 
+
 def build_samples_from_file(p_list,window_size,sample_start, sample_end, result_dict):
     count_lines=-1
     stop=False
@@ -445,8 +446,6 @@ def validate_sample(sample, near_sample_df, radius):
     return min(sample_count)
 
 
-
-
 def stitch(common_samples_df, shift_pointers):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
@@ -477,6 +476,54 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''BORIS'''
+def build_samples_better(key, sample_start, num_samples, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
+    '''
+    build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
+    '''
+    print 'building samples...'
+    n = len(key)
+    for sample_idx in xrange(sample_start, num_samples):
+        if sample_idx % 1000 == 0:
+            print sample_idx
+        sample_start = np.random.randint(n - sample_len + 1)
+        sample = np.array(list(key[sample_start:sample_start + sample_len])).astype(int)
+        # flip random bits
+        rand_flip = (np.random.rand(len(sample)) < flip_probability).astype(int)
+        sample[np.where(rand_flip > 0)] = 1 - sample[np.where(rand_flip > 0)]
+        # delete random bits
+        rand_delete = (np.random.rand(len(sample)) < delete_probability).astype(int)
+        sample = sample[np.where(rand_delete == 0)]
+        # insert random bits
+        rand_insert = (np.random.rand(len(sample) + 1) < insert_probability).astype(int)
+        rand_bits_to_insert = (np.random.rand(sum(rand_insert)) > 0.5).astype(int)
+        sample = np.insert(sample, np.where(rand_insert == 1)[0], rand_bits_to_insert)
+        # scan windows of sample
+        for window_start in xrange(len(sample) - window_size + 1):
+            window = sample[window_start:window_start + window_size]
+            window_key = ''.join(window.astype(str))
+            if window_key not in result_dict:
+                result_dict[window_key] = {'sample': window_key,
+                                           'count': 1,
+                                           'weight': sum(window),
+                                           'similar_count': 0,
+                                           'sample_start': [sample_start + window_start],
+                                           'similar_samples': [],
+                                           'closest_majority_sample': ''}
+            else:
+                result_dict[window_key]['count'] += 1
+                if sample_start + window_start not in result_dict[window_key]['similar_samples']:
+                    result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
+                        sample_start + window_start]
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+    print 'DONE!'
+    return result_df, result_dict
+
+
+
+
+
+
+
 def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 ):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible

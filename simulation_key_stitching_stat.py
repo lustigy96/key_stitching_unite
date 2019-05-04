@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     SIMULATION = True
     ALLOW_CYCLES = False
-    CASE = 1
+    CASE = 2 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
     try:
         os.mkdir("./results/")
     except:
@@ -34,29 +34,33 @@ if __name__ == "__main__":
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
     megic_num_vec = [10, 25, 50, 100, 150]
     stitch_vec = [1]
-    window_size_vec=[20,30] #each has its own graph
+    window_size_vec=[30,20] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1
-    window_size = 30
+    window_size = 20
     quantile = 0.5
     sample_len = 50
 
 
-
     if CASE==1:
-        flip_probability = 0.05  # (float)(110/500)
-        delete_probability = 0.05  # (float)(20/500)
-        insert_probability = 0.05  # (float)(20/500)
+        flip_probability = 0.05
+        delete_probability = 0.05
+        insert_probability = 0.05
         f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keyLength_X=megicNumVec.txt", "a+")
 
 
     if CASE==2:
-        flip_probability = 0.22  # (float)(110/500)
-        delete_probability = 0.05  # (float)(20/500)
-        insert_probability = 0.05  # (float)(20/500)
+        flip_probability = 0.22
+        delete_probability = 0.05
+        insert_probability = 0.05
         f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=keyLength_X=megicNumVec.txt", "a+")
 
+    if CASE==3:
+        flip_probability = 0.1
+        delete_probability = 0.05
+        insert_probability = 0.05
+        f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keyLength_X=megicNumVec.txt", "a+")
 
     f_data.write(' '.join(map(str,key_length_vec)))
     f_data.write('\n')
@@ -66,16 +70,21 @@ if __name__ == "__main__":
 
     i=0
     for key_length in key_length_vec:
+        start_samp = 0
+        result_dict = {}
         key = func.init_key(key_length, 41)
         for megic_num in megic_num_vec:
             if CASE == 1:
                 f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keyLength_X=megicNumVec.txt","a+")
             if CASE == 2:
                 f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=keyLength_X=megicNumVec.txt","a+")
+            if CASE == 3:
+                f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keyLength_X=megicNumVec.txt","a+")
             summryMy = open("./results/simulation/summryMy_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION), "a+")
 
             samples_num = megic_num * (key_length - sample_len) * (sample_len - window_size)
-            result_df = func.build_samples(key, samples_num, sample_len, window_size, flip_probability, delete_probability, insert_probability, key_length)
+            result_df, result_dict = func.build_samples_better(key=key, sample_start=sample_start, num_samples=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
+            sample_start = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
             shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
