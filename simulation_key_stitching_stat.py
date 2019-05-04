@@ -32,36 +32,54 @@ if __name__ == "__main__":
 
     key_length_vec = [512,1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
-    megic_num_vec = [10, 25, 50, 100, 150]
+    megic_num_vec = [10, 20, 30, 50, 100, 120]
     stitch_vec = [1]
-    window_size_vec=[30,20] #each has its own graph
+    window_size_vec=[19, 20, 22, 25, 30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1
-    window_size = 20
-    quantile = 0.5
+    # window_size = 20
+    quantile = 0.6
     sample_len = 50
+    key_length = 512
 
 
     if CASE==1:
         flip_probability = 0.05
         delete_probability = 0.05
         insert_probability = 0.05
-        f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keyLength_X=megicNumVec.txt", "a+")
-
+        DIR_RESULT_PATH ="./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        try:
+            os.mkdir(DIR_RESULT_PATH)
+        except:
+            None
 
     if CASE==2:
         flip_probability = 0.22
         delete_probability = 0.05
         insert_probability = 0.05
-        f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=keyLength_X=megicNumVec.txt", "a+")
+        DIR_RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        try:
+            os.mkdir(DIR_RESULT_PATH)
+        except:
+            None
 
     if CASE==3:
         flip_probability = 0.1
         delete_probability = 0.05
         insert_probability = 0.05
-        f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keyLength_X=megicNumVec.txt", "a+")
+        DIR_RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        try:
+            os.mkdir(DIR_RESULT_PATH)
+        except:
+            None
 
+
+
+    f_data = open(RESULT_PATH,"a+")
     f_data.write(' '.join(map(str,key_length_vec)))
     f_data.write('\n')
     f_data.write(' '.join(map(str,megic_num_vec)))
@@ -69,19 +87,13 @@ if __name__ == "__main__":
     f_data.close()
 
     i=0
-    for key_length in key_length_vec:
+    for window_size in window_size_vec:
         start_samp = 0
         result_dict = {}
         key = func.init_key(key_length, 41)
         for megic_num in megic_num_vec:
-            if CASE == 1:
-                f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keyLength_X=megicNumVec.txt","a+")
-            if CASE == 2:
-                f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=keyLength_X=megicNumVec.txt","a+")
-            if CASE == 3:
-                f_data = open("./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keyLength_X=megicNumVec.txt","a+")
-            summryMy = open("./results/simulation/summryMy_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION), "a+")
-
+            f_data = open(RESULT_PATH, "a+")
+            summryMy = open(DIR_RESULT_PATH+"summryMy_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}_error={4}%.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION, int(flip_probability*100)), "a+")
             samples_num = megic_num * (key_length - sample_len) * (sample_len - window_size)
             result_df, result_dict = func.build_samples_better(key=key, sample_start=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
             start_samp = samples_num
