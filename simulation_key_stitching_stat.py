@@ -95,12 +95,12 @@ if __name__ == "__main__":
             f_data = open(RESULT_PATH, "a+")
             summryMy = open(DIR_RESULT_PATH+"summryMy_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}_error={4}%.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION, int(flip_probability*100)), "a+")
             samples_num = megic_num * (key_length - sample_len) * (sample_len - window_size)
-            result_df, result_dict = func.build_samples_better(key=key, sample_start=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
+            result_df, result_dict = func.build_samples_continues_threads(key=key, sample_begin=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
             start_samp = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
             shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
-            retrieved_key = func.stitch_boris(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
+            retrieved_key = func.stitch_boris_threads(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
             candidate_key = max(retrieved_key, key=len)
 
             ## print results conclusion to file

@@ -476,13 +476,13 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''BORIS'''
-def build_samples_better(key, sample_start, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
+def build_samples_continues(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
     '''
     print 'building samples...'
     n = len(key)
-    for sample_idx in xrange(sample_start, sample_end):
+    for sample_idx in xrange(sample_begin, sample_end):
         if sample_idx % 1000 == 0:
             print sample_idx
         sample_start = np.random.randint(n - sample_len + 1)
@@ -519,9 +519,60 @@ def build_samples_better(key, sample_start, sample_end, sample_len, window_size,
     return result_df, result_dict
 
 
-
-
-
+def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, MAX_THREADS=200):
+    '''
+    build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
+    '''
+    print 'building samples...'
+    n = len(key)
+    mutex_result_dict = threading.Lock()
+    threads = []
+    for sample_idx in xrange(sample_begin, sample_end):
+        threads.append(threading.Thread(target=build_samples_better_thread, args=(key, n, sample_idx, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, mutex_result_dict)))
+        startThreads = threading.active_count()
+        for t in threads:
+            t.start()
+            if threading.active_count() == MAX_THREADS + startThreads:
+                print "MAX Threads reached wait for finish"
+                t.join()
+        [t.join() for t in threads if t.isAlive()]
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+    print 'DONE!'
+    return result_df, result_dict
+def build_samples_better_thread(key, n, sample_idx, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, mutex_result_dict):
+    if sample_idx % 1000 == 0:
+        print sample_idx
+    sample_start = np.random.randint(n - sample_len + 1)
+    sample = np.array(list(key[sample_start:sample_start + sample_len])).astype(int)
+    # flip random bits
+    rand_flip = (np.random.rand(len(sample)) < flip_probability).astype(int)
+    sample[np.where(rand_flip > 0)] = 1 - sample[np.where(rand_flip > 0)]
+    # delete random bits
+    rand_delete = (np.random.rand(len(sample)) < delete_probability).astype(int)
+    sample = sample[np.where(rand_delete == 0)]
+    # insert random bits
+    rand_insert = (np.random.rand(len(sample) + 1) < insert_probability).astype(int)
+    rand_bits_to_insert = (np.random.rand(sum(rand_insert)) > 0.5).astype(int)
+    sample = np.insert(sample, np.where(rand_insert == 1)[0], rand_bits_to_insert)
+    # scan windows of sample
+    for window_start in xrange(len(sample) - window_size + 1):
+        window = sample[window_start:window_start + window_size]
+        window_key = ''.join(window.astype(str))
+        mutex_result_dict.acquire()
+        if window_key not in result_dict:
+            result_dict[window_key] = {'sample': window_key,
+                                       'count': 1,
+                                       'weight': sum(window),
+                                       'similar_count': 0,
+                                       'sample_start': [sample_start + window_start],
+                                       'similar_samples': [],
+                                       'closest_majority_sample': ''}
+        else:
+            result_dict[window_key]['count'] += 1
+            if sample_start + window_start not in result_dict[window_key]['similar_samples']:
+                result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
+                    sample_start + window_start]
+        mutex_result_dict.release()
 
 
 def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 ):
@@ -582,20 +633,79 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
 
 
 
+def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 , MAX_THREADS=200):
+    '''
+    traverse the DAG, starting from the sinks, and generate as long sequences as possible
+    the algorithm assumes each snippet (node) has at most one incoming link
+    if it should support multiple incoming links, then the function should be adjusted
+    '''
+    #    shift_pointers_right_index_df = pd.DataFrame(shift_pointers['right_index']).transpose()
+    #    shift_pointers_left_index_df = pd.DataFrame(shift_pointers['left_index']).transpose()
+    common_samples_array = np.array(common_samples_df['sample'])
+    start_samples = []
+    for sample in common_samples_array:
+        if sample not in shift_pointers['right_index']:
+            start_samples += [sample]
+    retrieved_key = []
+
+    mutex_retrieved_key = threading.Lock()
+    threads = []
+    for start_sample in start_samples:
+        threads.append(threading.Thread(target=stitch_boris_thread, args=(start_sample, shift_pointers, all2PowerWindowArray_idx, allowCycle, retrieved_key, mutex_retrieved_key)))
+
+    startThreads = threading.active_count()
+    for t in threads:
+        t.start()
+        if threading.active_count() == MAX_THREADS + startThreads:
+            print "MAX Threads reached wait for finish"
+            t.join()
+
+    [t.join() for t in threads if t.isAlive()]
+    return retrieved_key
+def stitch_boris_thread(start_sample, shift_pointers, all2PowerWindowArray_idx, allowCycle, retrieved_key, mutex_retrieved_key):
+    print 'START SAMPLE: ' + start_sample
+    curr_sample = start_sample
+    cycle_break = not allowCycle
+    b = BitArray(bin=start_sample)
+
+    path = [all2PowerWindowArray_idx[b.uint]]
+
+    curr_key = curr_sample
+    # total_shift = 0
+    while curr_sample in shift_pointers['left_index']:
+        cycle_break = False
+        curr_sample_right_neighbor_dict = shift_pointers['left_index'][curr_sample]
+        curr_sample_right_neighbor = curr_sample_right_neighbor_dict['right_sample']
+        curr_sample_right_neighbor_to_add = curr_sample_right_neighbor[
+                                            -shift_pointers['left_index'][curr_sample]['shift']:]
+        curr_key += curr_sample_right_neighbor_to_add
+        # total_shift += shift_pointers['left_index'][curr_sample]['shift']
+        curr_sample = curr_sample_right_neighbor
+        b = BitArray(bin=curr_sample)
+        if all2PowerWindowArray_idx[b.uint] in path:
+            break
+        else:
+            path.append(all2PowerWindowArray_idx[b.uint])
+    if not cycle_break:
+        mutex_retrieved_key.acquire()
+        retrieved_key += [curr_key]
+        mutex_retrieved_key.release()
+
+'''
 def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
-    '''
-    build DAG where snippets are connected if they can be stitched by a small shift
-    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
-    '''
+    #
+    #build DAG where snippets are connected if they can be stitched by a small shift
+    #only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
+    #
     common_samples_array = np.array(common_samples_df['sample'])
     common_count_array = np.array(common_samples_df['count'])
 
     print 'building DAG...'
     shift_pointers = {'right_index': {}, 'left_index': {}}
 
-    '''************************************************************************************
+    #************************************************************************************
     # build array 2^window, and put counted value in each index correspend for the samples
-    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard '''
+    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
 
     all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
     orderArray = np.zeros(len(common_samples_array), dtype=np.uint32)  # this array in to save the order of the samples in common_samples_array
@@ -609,7 +719,7 @@ def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size
     # print len(common_samples_array)
     # if len(common_samples_array)!=len(all2PowerWindowArray[all2PowerWindowArray == True]):
     #     print "[build_shift_pointers]: Error the len of all2PowerWindowArray not as common_samples_array"
-    '''************************************************************************************'''
+    #************************************************************************************
 
     for i in xrange(len(common_samples_array)):  # run over all the order of the samples
         left_sample_number = orderArray[i]
@@ -661,15 +771,8 @@ def build_shift_pointers_order(common_samples_df, stitch_shift_size, window_size
     print 'DONE!'
 
     return shift_pointers
-#debug
-
-
-
-
-
-
-
-
+    
+'''
 
 
 
@@ -709,8 +812,6 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
 
         if (all2PowerWindowArray[left_sample_index] > 0):
             left_sample = common_samples_array[all2PowerWindowArray_idx[left_sample_index]]
-            if left_sample == "001001110111111":
-                print "debug"
             mask = 1
             for stitch_shift in range(1, stitch_shift_size + 1):
                 temp = left_sample_index << stitch_shift  # shift the bit
