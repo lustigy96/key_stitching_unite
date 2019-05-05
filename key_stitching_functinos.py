@@ -529,13 +529,13 @@ def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, w
     threads = []
     for sample_idx in xrange(sample_begin, sample_end):
         threads.append(threading.Thread(target=build_samples_better_thread, args=(key, n, sample_idx, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, mutex_result_dict)))
-        startThreads = threading.active_count()
-        for t in threads:
-            t.start()
-            if threading.active_count() == MAX_THREADS + startThreads:
-                print "MAX Threads reached wait for finish"
-                t.join()
-        [t.join() for t in threads if t.isAlive()]
+    startThreads = threading.active_count()
+    for t in threads:
+        t.start()
+        if threading.active_count() == MAX_THREADS + startThreads:
+            print "MAX Threads reached wait for finish"
+            t.join()
+    [t.join() for t in threads if t.isAlive()]
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
     print 'DONE!'
     return result_df, result_dict
