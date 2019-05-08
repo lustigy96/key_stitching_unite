@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
 
 
-    key_length_vec = [512,1024,2048]
+    key_length_vec = [1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
     megic_num_vec = [10, 20, 30, 50, 100, 120]
     stitch_vec = [1]
-    window_size_vec=[19, 20, 22, 25, 30] #each has its own graph
+    window_size_vec=[20, 22, 25, 30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             result_df, result_dict = func.build_samples_continues_threads(key=key, sample_begin=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
             start_samp = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
-            shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
+            shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better_more(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
             retrieved_key = func.stitch_boris_threads(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
             candidate_key = max(retrieved_key, key=len)
