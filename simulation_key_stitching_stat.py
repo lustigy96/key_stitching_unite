@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
 
 
-    key_length_vec = [1024,2048]
+    key_length_vec = [512,1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
-    megic_num_vec = [10, 20, 30, 50, 100, 120]
+    megic_num_vec = [1,10, 20, 30, 50, 100, 120]
     stitch_vec = [1]
-    window_size_vec=[20, 22, 25, 30] #each has its own graph
+    window_size_vec=[19,20, 22, 25, 30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1

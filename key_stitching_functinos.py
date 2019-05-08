@@ -784,7 +784,7 @@ def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray
     [t.join() for t in threads if t.isAlive()]
     return retrieved_key
 def stitch_boris_thread(start_sample, shift_pointers, all2PowerWindowArray_idx, allowCycle, retrieved_key, mutex_retrieved_key):
-    print 'START SAMPLE: ' + start_sample
+    print '\nSTART SAMPLE: ' + start_sample
     curr_sample = start_sample
     cycle_break = not allowCycle
     b = BitArray(bin=start_sample)
@@ -796,7 +796,7 @@ def stitch_boris_thread(start_sample, shift_pointers, all2PowerWindowArray_idx, 
         cycle_break = False
         curr_sample_right_neighbor_dict = shift_pointers['left_index'][curr_sample]
         curr_sample_right_neighbor = curr_sample_right_neighbor_dict['right_sample']
-        curr_key += curr_sample_right_neighbor['bitsShift']
+        curr_key += curr_sample_right_neighbor_dict['bitsShift']
         curr_sample = curr_sample_right_neighbor
         idx = curr_sample['my_sample_index']
         if all2PowerWindowArray_idx[idx] in path:
