@@ -524,7 +524,7 @@ def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, w
     for t in threads:
         t.start()
         if threading.active_count() == MAX_THREADS + startThreads:
-            print "MAX Threads reached wait for finish"
+            # print "MAX Threads reached wait for finish"
             t.join()
     [t.join() for t in threads if t.isAlive()]
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
@@ -778,7 +778,7 @@ def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray
     for t in threads:
         t.start()
         if threading.active_count() == MAX_THREADS + startThreads:
-            print "MAX Threads reached wait for finish"
+            # print "MAX Threads reached wait for finish"
             t.join()
 
     [t.join() for t in threads if t.isAlive()]
