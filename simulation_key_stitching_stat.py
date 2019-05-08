@@ -17,12 +17,12 @@ if __name__ == "__main__":
     try:
         os.mkdir("./results/")
     except:
-        None
+        pass
 
     try:
         os.mkdir("./results/simulation/")
     except:
-        None
+        pass
 
     print "\n\n~~Start Gabi Algorithem...~~\n\n"
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
-            None
+            pass
 
     if CASE==2:
         flip_probability = 0.22
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
-            None
+            pass
 
     if CASE==3:
         flip_probability = 0.1
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
-            None
+            pass
 
 
 
