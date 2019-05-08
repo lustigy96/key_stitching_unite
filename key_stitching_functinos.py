@@ -510,7 +510,7 @@ def build_samples_continues(key, sample_begin, sample_end, sample_len, window_si
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
     print 'DONE!'
     return result_df, result_dict
-def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, MAX_THREADS=200):
+def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, MAX_THREADS=100):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
     '''
@@ -754,7 +754,7 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
         if not cycle_break:
             retrieved_key += [curr_key]
     return retrieved_key
-def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 , MAX_THREADS=200):
+def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 , MAX_THREADS=100):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
@@ -798,7 +798,7 @@ def stitch_boris_thread(start_sample, shift_pointers, all2PowerWindowArray_idx, 
         curr_sample_right_neighbor = curr_sample_right_neighbor_dict['right_sample']
         curr_key += curr_sample_right_neighbor_dict['bitsShift']
         curr_sample = curr_sample_right_neighbor
-        idx = curr_sample['my_sample_index']
+        idx = curr_sample_right_neighbor_dict['my_sample_index']
         if all2PowerWindowArray_idx[idx] in path:
             break
         else:
