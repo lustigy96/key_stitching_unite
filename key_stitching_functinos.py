@@ -626,78 +626,6 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
 
     print 'DONE!'
     return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
-def build_shift_pointers_position_better_more(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
-    '''
-    build DAG where snippets are connected if they can be stitched by a small shift
-    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
-    '''
-    common_samples_array = np.array(common_samples_df['sample'])
-    common_count_array = np.array(common_samples_df['count'])
-
-    print 'building DAG...'
-    shift_pointers = {'right_index': {}, 'left_index': {}}
-
-    '''************************************************************************************'''
-    # build array 2^window, and put counted value in each index correspend for the samples
-    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
-    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
-    orderArrayMaxToMin = np.zeros(len(common_samples_array), dtype=np.uint32)
-    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
-
-    for idx, sample in enumerate(common_samples_array):
-        b = BitArray(bin=sample)
-        all2PowerWindowArray[b.uint] = common_count_array[idx]
-        all2PowerWindowArray_idx[b.uint] = idx
-        orderArrayMaxToMin[idx] = b.uint
-
-    idxMax = len(common_samples_array) + 1
-    '''************************************************************************************'''
-
-    for i in xrange(len(common_samples_array)):  # run over all the order of the samples
-        left_sample_index = orderArrayMaxToMin[i]
-        if i % 500 == 0:
-            print "i = {0}".format(i)
-
-        if (all2PowerWindowArray[left_sample_index] > 0):
-            left_sample = common_samples_array[all2PowerWindowArray_idx[left_sample_index]]
-            mask = 1
-            for stitch_shift in range(1, stitch_shift_size + 1):
-                temp = left_sample_index << stitch_shift  # shift the bit
-                temp &= ~(mask << window_size)
-                mask = (mask << 1) + 1
-
-                right_sample_idx = idxMax
-                jj=0
-                for j in xrange(2 ** stitch_shift):
-                    if (all2PowerWindowArray[temp + j] > 0):
-                        if (all2PowerWindowArray_idx[temp + j] < right_sample_idx):
-                            right_sample_idx = all2PowerWindowArray_idx[temp + j]
-                            right_sample_index = temp + j
-                            jj=j
-
-                if right_sample_idx != idxMax:
-                    right_sample = common_samples_array[all2PowerWindowArray_idx[right_sample_index]]
-                    if right_sample not in shift_pointers['right_index']:
-                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
-                                                                       'my_sample_index': right_sample_index,
-                                                                       'left_sample': left_sample,
-                                                                       'left_sample_index': left_sample_index,
-                                                                       'shift': stitch_shift,
-                                                                       'bitsShift':right_sample[-stitch_shift:]
-                                                                       }
-
-                    if left_sample not in shift_pointers['left_index']:
-                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
-                                                                     'right_sample_index': right_sample_index,
-                                                                     'left_sample': left_sample,
-                                                                     'my_sample_index': left_sample_index,
-                                                                     'shift': stitch_shift,
-                                                                     'bitsShift':right_sample[-stitch_shift:]
-                                                                     }
-                    break
-
-    print 'DONE!'
-    return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
 
 def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 ):
     '''
@@ -796,13 +724,15 @@ def stitch_boris_thread(start_sample, shift_pointers, all2PowerWindowArray_idx, 
         cycle_break = False
         curr_sample_right_neighbor_dict = shift_pointers['left_index'][curr_sample]
         curr_sample_right_neighbor = curr_sample_right_neighbor_dict['right_sample']
-        curr_key += curr_sample_right_neighbor_dict['bitsShift']
+        curr_sample_right_neighbor_to_add = curr_sample_right_neighbor[
+                                            -shift_pointers['left_index'][curr_sample]['shift']:]
+        curr_key += curr_sample_right_neighbor_to_add
         curr_sample = curr_sample_right_neighbor
-        idx = curr_sample_right_neighbor_dict['my_sample_index']
-        if all2PowerWindowArray_idx[idx] in path:
+        b = BitArray(bin=curr_sample)
+        if all2PowerWindowArray_idx[b.uint] in path:
             break
         else:
-            path.append(all2PowerWindowArray_idx[idx])
+            path.append(all2PowerWindowArray_idx[b.uint])
 
     if not cycle_break:
         mutex_retrieved_key.acquire()
@@ -918,6 +848,78 @@ def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
                     sys.exit(1)
                     # resultCompareGabiAndMe = False
                     # return resultCompareGabiAndMe
+def build_shift_pointers_position_better_more(common_samples_df, stitch_shift_size, window_size, allowCycle=False):
+    '''
+    build DAG where snippets are connected if they can be stitched by a small shift
+    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
+    '''
+    common_samples_array = np.array(common_samples_df['sample'])
+    common_count_array = np.array(common_samples_df['count'])
+
+    print 'building DAG...'
+    shift_pointers = {'right_index': {}, 'left_index': {}}
+
+    '''************************************************************************************'''
+    # build array 2^window, and put counted value in each index correspend for the samples
+    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
+    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
+    orderArrayMaxToMin = np.zeros(len(common_samples_array), dtype=np.uint32)
+    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
+
+    for idx, sample in enumerate(common_samples_array):
+        b = BitArray(bin=sample)
+        all2PowerWindowArray[b.uint] = common_count_array[idx]
+        all2PowerWindowArray_idx[b.uint] = idx
+        orderArrayMaxToMin[idx] = b.uint
+
+    idxMax = len(common_samples_array) + 1
+    '''************************************************************************************'''
+
+    for i in xrange(len(common_samples_array)):  # run over all the order of the samples
+        left_sample_index = orderArrayMaxToMin[i]
+        if i % 500 == 0:
+            print "i = {0}".format(i)
+
+        if (all2PowerWindowArray[left_sample_index] > 0):
+            left_sample = common_samples_array[all2PowerWindowArray_idx[left_sample_index]]
+            mask = 1
+            for stitch_shift in range(1, stitch_shift_size + 1):
+                temp = left_sample_index << stitch_shift  # shift the bit
+                temp &= ~(mask << window_size)
+                mask = (mask << 1) + 1
+
+                right_sample_idx = idxMax
+                jj=0
+                for j in xrange(2 ** stitch_shift):
+                    if (all2PowerWindowArray[temp + j] > 0):
+                        if (all2PowerWindowArray_idx[temp + j] < right_sample_idx):
+                            right_sample_idx = all2PowerWindowArray_idx[temp + j]
+                            right_sample_index = temp + j
+                            jj=j
+
+                if right_sample_idx != idxMax:
+                    right_sample = common_samples_array[all2PowerWindowArray_idx[right_sample_index]]
+                    if right_sample not in shift_pointers['right_index']:
+                        shift_pointers['right_index'][right_sample] = {'right_sample': right_sample,
+                                                                       'my_sample_index': right_sample_index,
+                                                                       'left_sample': left_sample,
+                                                                       'left_sample_index': left_sample_index,
+                                                                       'shift': stitch_shift,
+                                                                       'bitsShift':right_sample[-stitch_shift:]
+                                                                       }
+
+                    if left_sample not in shift_pointers['left_index']:
+                        shift_pointers['left_index'][left_sample] = {'right_sample': right_sample,
+                                                                     'right_sample_index': right_sample_index,
+                                                                     'left_sample': left_sample,
+                                                                     'my_sample_index': left_sample_index,
+                                                                     'shift': stitch_shift,
+                                                                     'bitsShift':right_sample[-stitch_shift:]
+                                                                     }
+                    break
+
+    print 'DONE!'
+    return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
 
 
 '''YAEL'''
