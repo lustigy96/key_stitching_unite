@@ -100,7 +100,7 @@ if __name__ == "__main__":
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
             shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
-            retrieved_key = func.stitch_boris_threads(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
+            retrieved_key = func.stitch_boris(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
             candidate_key = max(retrieved_key, key=len)
 
             ## print results conclusion to file

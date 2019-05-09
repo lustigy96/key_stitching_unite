@@ -682,7 +682,7 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
         if not cycle_break:
             retrieved_key += [curr_key]
     return retrieved_key
-def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 , MAX_THREADS=100):
+def stitch_boris_threads(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=2048 , MAX_THREADS=20):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
