@@ -565,7 +565,7 @@ def build_samples_better_thread(key, n, sample_idx, sample_len, window_size, fli
                     sample_start + window_start]
         mutex_result_dict.release()
 
-def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, allowCycle=None):
+def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -626,8 +626,7 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
 
     print 'DONE!'
     return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
-
-def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=True, key_length=None ):
+def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=False, key_length=None ):
     '''
     traverse the DAG, starting from the sinks, and generate as long sequences as possible
     the algorithm assumes each snippet (node) has at most one incoming link
@@ -637,8 +636,6 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
     #    shift_pointers_left_index_df = pd.DataFrame(shift_pointers['left_index']).transpose()
     print 'stitch_boris'
     common_samples_array = np.array(common_samples_df['sample'])
-
-
 
     start_samples = []
     for sample in common_samples_array:
@@ -653,18 +650,12 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
         #     print 'START SAMPLE: ' + start_sample
 
         curr_sample = start_sample
-        cycle_break = not allowCycle
-
         b = BitArray(bin=start_sample)
         path=[all2PowerWindowArray_idx[b.uint]]
-
-
         curr_key = curr_sample
         total_shift = 0
-        curr_key_list = np.array([start_sample])
 
         while curr_sample in shift_pointers['left_index']:
-            cycle_break = False
             curr_sample_dict = shift_pointers['left_index'][curr_sample]
             curr_sample_right_neighbor = curr_sample_dict['right_sample']
             curr_sample_right_neighbor_to_add = curr_sample_right_neighbor[-shift_pointers['left_index'][curr_sample]['shift']:]
@@ -672,10 +663,12 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
             total_shift += shift_pointers['left_index'][curr_sample]['shift']
             curr_sample = curr_sample_right_neighbor
             b = BitArray(bin=curr_sample)
-            if all2PowerWindowArray_idx[b.uint] in path:
-                break
-            else:
-                path.append(all2PowerWindowArray_idx[b.uint])
+
+            if not allowCycle:
+                if all2PowerWindowArray_idx[b.uint] in path:
+                    break
+                else:
+                    path.append(all2PowerWindowArray_idx[b.uint])
 
 
             # if len(curr_key) >= 3 * key_length:
@@ -683,19 +676,13 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
             #     if not allowCycle:
             #         cycle_break = True
             #         break
-        if not cycle_break:
-            retrieved_key += [curr_key]
-    print "done stich"
+        # if not cycle_break:
+        retrieved_key += [curr_key]
+    print "done stitch_boris"
     return retrieved_key
 
 
-
-
-
-
-
-
-def build_shift_pointers_position_better2(common_samples_df, stitch_shift_size, window_size, allowCycle=None, key_length=None):
+def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_size):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
     only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
@@ -770,16 +757,8 @@ def build_shift_pointers_position_better2(common_samples_df, stitch_shift_size, 
                     break
     print 'DONE!'
     return all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift
-
-
-
-
-def stitch_boris2(common_samples_df,  all2PowerWindowArray_idx,
-                  shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift,
-                  shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift,
-                  allowCycle=False, key_length=None):
+def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift, allowCycle=False, key_length=None):
     print 'stitch_boris2'
-
     common_samples_array = np.array(common_samples_df['sample'])
 
     # start_samples = []
@@ -797,48 +776,25 @@ def stitch_boris2(common_samples_df,  all2PowerWindowArray_idx,
         #     print 'START SAMPLE NUMBER: ' + str(start_sample_number)
         start_sample = common_samples_array[all2PowerWindowArray_idx[start_sample_number]]
         curr_sample = start_sample
-        cycle_break = not allowCycle
         curr_sample_number = start_sample_number
         path = [all2PowerWindowArray_idx[curr_sample_number]]
         curr_key = curr_sample
-
         while shift_pointers_left_index[curr_sample_number] == 2:
-            cycle_break = False
             curr_sample_right_neighbor_number = shift_pointers_left_index_right[curr_sample_number]
             curr_sample_right_neighbor = common_samples_array[all2PowerWindowArray_idx[curr_sample_right_neighbor_number]]
             shift = shift_pointers_left_index_shift[curr_sample_number]
-
             curr_key += curr_sample_right_neighbor[(-1)*shift:]
-
-
             curr_sample = curr_sample_right_neighbor
             curr_sample_number = curr_sample_right_neighbor_number
+            if not allowCycle:
+                if all2PowerWindowArray_idx[curr_sample_number] in path:
+                    break
+                else:
+                    path.append(all2PowerWindowArray_idx[curr_sample_number])
 
-            if all2PowerWindowArray_idx[curr_sample_number] in path:
-                break
-            else:
-                path.append(all2PowerWindowArray_idx[curr_sample_number])
-
-        if not cycle_break:
-            retrieved_key += [curr_key]
-    print "done stich"
+        retrieved_key += [curr_key]
+    print "done stitch_boris2"
     return retrieved_key
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -853,8 +809,7 @@ def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
     '''this part is to test if gabi and my optimization give the same reasults'''
     # test this:
     print "[INFO][compareGabiAndMe]: START COMPRAED BORIS AND GABI! "
-    if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(
-            np.array(shift_pointers_Boris['left_index'].keys())):
+    if len(np.array(shift_pointers_Gabi['left_index'].keys())) != len(np.array(shift_pointers_Boris['left_index'].keys())):
         print "[ERROR][compareGabiAndMe][left_index]: len boris different len gabi"
         sys.exit(1)
         # resultCompareGabiAndMe = False
@@ -877,7 +832,6 @@ def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
 
     print "[INFO][compareGabiAndMe][RESULT={0}]: DONE! ".format(resultCompareGabiAndMe)
     return True
-
 def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
     '''this part is to test if gabi and my optimization give the same reasults'''
     # test this:
@@ -956,7 +910,26 @@ def compareGabiAndMeThreads(shift_pointers_Boris, shift_pointers_Gabi, case):
                     sys.exit(1)
                     # resultCompareGabiAndMe = False
                     # return resultCompareGabiAndMe
+def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_pointers_left_index, retrieved_key, retrieved_key2):
 
+    print "[INFO][compareDictAndNoDict]: START COMPRAED BORIS DICT AND NODICT! "
+    if len(shift_pointers['left_index'].keys()) != len(shift_pointers_left_index[shift_pointers_left_index==2]):
+        print "[ERROR][compareDictAndNoDict][left_index]: len boris dict different len no dict"
+        sys.exit(1)
+
+
+    if len(shift_pointers['right_index'].keys()) != len(shift_pointers_right_index[shift_pointers_right_index==2]):
+        print "[ERROR][compareDictAndNoDict][right_index]: len boris dict different len no dict"
+        sys.exit(1)
+
+    for key in retrieved_key:
+        if key not in retrieved_key2:
+            print "[ERROR][compareDictAndNoDict][retrieved_key]: retrieved_key have key which retrieved_key2 doesnt"
+            sys.exit(1)
+    for key in retrieved_key2:
+        if key not in retrieved_key:
+            print "[ERROR][compareDictAndNoDict][retrieved_key2]: retrieved_key2 have key which retrieved_key doesnt"
+            sys.exit(1)
 
 
 '''YAEL'''

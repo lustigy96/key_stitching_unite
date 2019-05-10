@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     SIMULATION = True
     ALLOW_CYCLES = False
-    CASE = 2 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
+    CASE = 1 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
     try:
         os.mkdir("./results/")
     except:
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
     megic_num_vec = [1,10, 20, 30, 50, 100, 150]
     stitch_vec = [1]
-    window_size_vec=[20,30, 25,20] #each has its own graph
+    window_size_vec=[15, 25,20] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1
@@ -99,6 +99,9 @@ if __name__ == "__main__":
             start_samp = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
 
+            shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
+
+
 
             start = datetime.datetime.now()
             shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = \
@@ -115,10 +118,10 @@ if __name__ == "__main__":
 
             start = datetime.datetime.now()
             all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
-                func.build_shift_pointers_position_better2(common_samples_df=common_samples_df,
+                func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
                                                            stitch_shift_size=stitch_shift_size,
                                                            window_size=window_size)
-            retrieved_key2 = func.stitch_boris2(common_samples_df=common_samples_df,
+            retrieved_key2 = func.stitch_boris_noDict(common_samples_df=common_samples_df,
                                                 all2PowerWindowArray_idx=all2PowerWindowArray_idx,
                                                 shift_pointers_right_index=shift_pointers_right_index,
                                                 shift_pointers_right_index_left=shift_pointers_right_index_left,
@@ -129,20 +132,18 @@ if __name__ == "__main__":
             took_time2 = datetime.datetime.now() - start
             candidate_key2 = max(retrieved_key2, key=len)
 
+            func.compareGabiAndMe(shift_pointers_Boris,shift_pointers_Gabi)
+
+            func.compareDictAndNoDict(shift_pointers=shift_pointers_Boris,
+                                      shift_pointers_right_index=shift_pointers_right_index,
+                                      shift_pointers_left_index=shift_pointers_left_index,
+                                      retrieved_key=retrieved_key,
+                                      retrieved_key2=retrieved_key2)
+
             print "time for stitch_boris:"
             print took_time1
             print "time for stitch_boris2"
             print took_time2
-
-            print "comprae stitch_boris vs stitch_boris2"
-            for key in retrieved_key:
-                if key not in retrieved_key2:
-                    print "WROOOONG retrieved_key"
-            for key in retrieved_key2:
-                if key not in retrieved_key:
-                    print "WROOOONG retrieved_key2"
-
-
 
 
             ## print results conclusion to file
