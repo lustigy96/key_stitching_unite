@@ -29,14 +29,16 @@ if __name__ == "__main__":
 
     hex_key_500="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
     key=''.join(func.hex2bin_map[i] for i in hex_key_500)
-    path = "./samples/key500_probe300_good_decoded_samples_486K.txt"
-    path2 = "./samples/key500_probe300_good_decoded_samples_486KV2.txt"
-    path3 = "./samples/key500_probe300_good_decoded_samples_170Ksamp.txt"
+    path = "./samples/good_decoded_samples1.txt"
+    # path = "./samples/key500_probe300_good_decoded_samples_486K.txt"
+    # path2 = "./samples/key500_probe300_good_decoded_samples_486KV2.txt"
+    # path3 = "./samples/key500_probe300_good_decoded_samples_170Ksamp.txt"
+    p_list = [path]
 
 
     window_size_vec=[30, 25, 20] #each has its own graph
-    quantile_vec=[0.6, 0.7, 0.9] #each has its own graph
-    samples_num_vec=[100000, 300000 , 600000, 800000, 1000000, 2000000] #bars section
+    quantile_vec=[0.6, 0.9, 0.8] #each has its own graph
+    samples_num_vec=[100000, 300000 , 600000, 1000000, 2000000, 3500000] #bars section
     stitch_shift_size = 1
     key_length = n = len(key)
     window_size = 30
@@ -57,7 +59,6 @@ if __name__ == "__main__":
             f_data = open(f_data_path, "a+")
             summryMy = open("./results/realChannel/summryMy_keyLength={0}_windowSize={1}_quantile={2}.txt".format(key_length,  window_size,quantile), "a+")
 
-            p_list = [path, path2, path3]
             result_df, result_dict = func.build_samples_from_file(p_list=p_list, window_size=window_size, sample_start=start_samp, sample_end=samples_num, result_dict=result_dict)
             start_samp = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
