@@ -591,12 +591,12 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
         if sample not in shift_pointers['right_index']:
             start_samples += [sample]
     retrieved_key = []
-    # i=0
+    i=0
     for start_sample in start_samples:
-        # i+=1
-        # if i % 1000 == 0:
-        #     print "i = {0}".format(i)
-        #     print 'START SAMPLE: ' + start_sample
+        i+=1
+        if i % 10000 == 0:
+            print "i = {0}".format(i)
+            print 'START SAMPLE: ' + start_sample
 
         curr_sample = start_sample
         b = BitArray(bin=start_sample)
@@ -716,12 +716,12 @@ def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_poin
     start_samples_number_array = np.where(shift_pointers_right_index==1)[0]
 
     retrieved_key = []
-    # i=0
+    i=0
     for start_sample_number in start_samples_number_array:
-        # i+=1
-        # if i % 1000 == 0:
-        #     print "i = {0}".format(i)
-        #     print 'START SAMPLE NUMBER: ' + str(start_sample_number)
+        i+=1
+        if i % 10000 == 0:
+            print "i = {0}".format(i)
+            print 'START SAMPLE NUMBER: ' + str(start_sample_number)
         start_sample = common_samples_array[all2PowerWindowArray_idx[start_sample_number]]
         curr_sample = start_sample
         curr_sample_number = start_sample_number
