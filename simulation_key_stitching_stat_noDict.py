@@ -103,6 +103,7 @@ if __name__ == "__main__":
                 func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
                                                  stitch_shift_size=stitch_shift_size,
                                                  window_size=window_size)
+
             retrieved_key = func.stitch_boris_noDict(common_samples_df=common_samples_df,
                                                       all2PowerWindowArray_idx=all2PowerWindowArray_idx,
                                                       shift_pointers_right_index=shift_pointers_right_index,
