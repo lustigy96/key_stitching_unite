@@ -31,7 +31,7 @@ hex2bin_map = {
     "f": "1111"
 }
 
-'''Gabi'''
+'''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~GABI~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
 def ncr(n, r):
     # calculates {n \choose r}
     r = min(r, n - r)
@@ -468,7 +468,10 @@ def stitch(common_samples_df, shift_pointers):
     return retrieved_key
 
 
-'''BORIS'''
+
+
+
+'''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BORIS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
 def build_samples_continues(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
@@ -510,60 +513,6 @@ def build_samples_continues(key, sample_begin, sample_end, sample_len, window_si
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
     print 'DONE!'
     return result_df, result_dict
-def build_samples_continues_threads(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, MAX_THREADS=100):
-    '''
-    build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
-    '''
-    print 'building samples...'
-    n = len(key)
-    mutex_result_dict = threading.Lock()
-    threads = []
-    for sample_idx in xrange(sample_begin, sample_end):
-        threads.append(threading.Thread(target=build_samples_better_thread, args=(key, n, sample_idx, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, mutex_result_dict)))
-    startThreads = threading.active_count()
-    for t in threads:
-        t.start()
-        if threading.active_count() == MAX_THREADS + startThreads:
-            # print "MAX Threads reached wait for finish"
-            t.join()
-    [t.join() for t in threads if t.isAlive()]
-    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
-    print 'DONE!'
-    return result_df, result_dict
-def build_samples_better_thread(key, n, sample_idx, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict, mutex_result_dict):
-    if sample_idx % 1000 == 0:
-        print sample_idx
-    sample_start = np.random.randint(n - sample_len + 1)
-    sample = np.array(list(key[sample_start:sample_start + sample_len])).astype(int)
-    # flip random bits
-    rand_flip = (np.random.rand(len(sample)) < flip_probability).astype(int)
-    sample[np.where(rand_flip > 0)] = 1 - sample[np.where(rand_flip > 0)]
-    # delete random bits
-    rand_delete = (np.random.rand(len(sample)) < delete_probability).astype(int)
-    sample = sample[np.where(rand_delete == 0)]
-    # insert random bits
-    rand_insert = (np.random.rand(len(sample) + 1) < insert_probability).astype(int)
-    rand_bits_to_insert = (np.random.rand(sum(rand_insert)) > 0.5).astype(int)
-    sample = np.insert(sample, np.where(rand_insert == 1)[0], rand_bits_to_insert)
-    # scan windows of sample
-    for window_start in xrange(len(sample) - window_size + 1):
-        window = sample[window_start:window_start + window_size]
-        window_key = ''.join(window.astype(str))
-        mutex_result_dict.acquire()
-        if window_key not in result_dict:
-            result_dict[window_key] = {'sample': window_key,
-                                       'count': 1,
-                                       'weight': sum(window),
-                                       'similar_count': 0,
-                                       'sample_start': [sample_start + window_start],
-                                       'similar_samples': [],
-                                       'closest_majority_sample': ''}
-        else:
-            result_dict[window_key]['count'] += 1
-            if sample_start + window_start not in result_dict[window_key]['similar_samples']:
-                result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
-                    sample_start + window_start]
-        mutex_result_dict.release()
 
 def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size):
     '''
@@ -681,7 +630,6 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
     print "done stitch_boris"
     return retrieved_key
 
-
 def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_size):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
@@ -795,13 +743,6 @@ def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_poin
         retrieved_key += [curr_key]
     print "done stitch_boris2"
     return retrieved_key
-
-
-
-
-
-
-
 
 # debug
 resultCompareGabiAndMe = True
@@ -932,12 +873,15 @@ def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_point
             sys.exit(1)
 
 
-'''YAEL'''
+
+
+
+
+'''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YAEL~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
 def tow_dim_arr2file(pathes,f_path):
     for p in pathes:
         f_path.write(' '.join(map(str,p)))
         f_path.write("\n")
-
 def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndexArray,tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
 
     for idx1 in xrange(start_idx,end_idx):
@@ -956,7 +900,6 @@ def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,sav
                     tree_pointers[idx1].append({'next': idx2,'shift': stitch_shift})
                     if idx2 not in rm_right: rm_right.append(idx2)
     print "done: "+str(start_idx)+"-"+str(end_idx)
-
 def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size):
     '''
     Build the tree pointers
@@ -1012,7 +955,6 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
     edge_left_pointers= list(set(edge_left_pointers) - set(remove))
 
     return tree_pointers, edge_left_pointers
-
 def stitch_tree_iterative_no_thread(tree_pointers, edge_left_pointers,min_len_path=400): #at first, send the window_size as a shift
     '''
     stitch the tree itterativly (DFS)

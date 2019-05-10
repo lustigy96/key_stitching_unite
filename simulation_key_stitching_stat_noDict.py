@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     SIMULATION = True
     ALLOW_CYCLES = False
-    CASE = 2 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
+    CASE = 1 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
     try:
         os.mkdir("./results/")
     except:
@@ -28,26 +28,28 @@ if __name__ == "__main__":
 
 
 
+
+
     key_length_vec = [512,1024,2048]
     sample_len_vec = [31,40,50]  # [50, 60, 70, 80, 100]
-    megic_num_vec = [1,10, 20, 30, 50, 100, 120]
+    megic_num_vec = [10, 30, 50]
     stitch_vec = [1]
-    window_size_vec=[19,20, 22, 25, 30] #each has its own graph
+    window_size_vec=[30] #each has its own graph
     quantile_vec=[0.5] #each has its own graph
 
     stitch_shift_size = 1
-    # window_size = 20
+    window_size = 30
     quantile = 0.6
     sample_len = 50
-    key_length = 512
+    # key_length = 512
 
 
     if CASE==1:
         flip_probability = 0.05
         delete_probability = 0.05
         insert_probability = 0.05
-        DIR_RESULT_PATH ="./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
-        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        DIR_RESULT_PATH ="./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keys_X_X=megicNumVec_Window=Dynamic_simulation=True/"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=5%_Graphs=keys_X_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=keys_X=megicNumVec_Window=Dynamic_simulation=True.txt"
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
@@ -58,7 +60,7 @@ if __name__ == "__main__":
         delete_probability = 0.05
         insert_probability = 0.05
         DIR_RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
-        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=20%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=20%_Graphs=keys_X=megicNumVec_Window=Dynamic_simulation=True.txt"
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
@@ -68,8 +70,8 @@ if __name__ == "__main__":
         flip_probability = 0.1
         delete_probability = 0.05
         insert_probability = 0.05
-        DIR_RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/"
-        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=WindowsSizes_X=megicNumVec_Window=Dynamic_simulation=True.txt"
+        DIR_RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keys_X=megicNumVec_Window=Dynamic_simulation=True/"
+        RESULT_PATH = "./results/simulation/dataForGraph_ErrorProbabilty=10%_Graphs=keys_X_X=megicNumVec_Window=Dynamic_simulation=True/dataForGraph_ErrorProbabilty=10%_Graphs=keys_X=megicNumVec_Window=Dynamic_simulation=True.txt"
         try:
             os.mkdir(DIR_RESULT_PATH)
         except:
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     f_data.close()
 
     i=0
-    for window_size in window_size_vec:
+    for key_length in key_length_vec:
         start_samp = 0
         result_dict = {}
         key = func.init_key(key_length, 41)
@@ -96,9 +98,22 @@ if __name__ == "__main__":
             result_df, result_dict = func.build_samples_continues(key=key, sample_begin=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
             start_samp = samples_num
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
-            shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = func.build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size, ALLOW_CYCLES)
 
-            retrieved_key = func.stitch_boris(common_samples_df, shift_pointers_Boris, all2PowerWindowArray_idx, allowCycle=ALLOW_CYCLES, key_length=key_length)
+            all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
+                func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
+                                                 stitch_shift_size=stitch_shift_size,
+                                                 window_size=window_size)
+            retrieved_key = func.stitch_boris_noDict(common_samples_df=common_samples_df,
+                                                      all2PowerWindowArray_idx=all2PowerWindowArray_idx,
+                                                      shift_pointers_right_index=shift_pointers_right_index,
+                                                      shift_pointers_right_index_left=shift_pointers_right_index_left,
+                                                      shift_pointers_right_index_shift=shift_pointers_right_index_shift,
+                                                      shift_pointers_left_index=shift_pointers_left_index,
+                                                      shift_pointers_left_index_right=shift_pointers_left_index_right,
+                                                      shift_pointers_left_index_shift=shift_pointers_left_index_shift)
+
+
+
             candidate_key = max(retrieved_key, key=len)
 
             ## print results conclusion to file
