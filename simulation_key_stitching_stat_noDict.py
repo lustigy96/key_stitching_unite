@@ -45,21 +45,20 @@ if __name__ == "__main__":
     GRAPHS = "KEYLENGTH" #"WINDOES" # QUANTILE
     X = "megicNumVec"
 
+    # CASE = input("Choose Case number (5, 22, 10) for error probabilty: ")
+    CASE = 22
 
-    CASE = 005 ## 1=error15%(5,5,5)  2=error30%(22,5,5) 3=error20%(10,5,5)
-
-
-    if CASE==005:
+    if CASE==5:
         flip_probability = 0.05
         delete_probability = 0.05
         insert_probability = 0.05
 
-    if CASE==022:
+    if CASE==22:
         flip_probability = 0.22
         delete_probability = 0.05
         insert_probability = 0.05
 
-    if CASE==010:
+    if CASE==10:
         flip_probability = 0.10
         delete_probability = 0.05
         insert_probability = 0.05
