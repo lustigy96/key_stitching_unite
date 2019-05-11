@@ -1,3 +1,4 @@
+#! /usr/bin/python
 import numpy as np
 import pandas as pd
 import key_stitching_functinos as func
@@ -42,7 +43,9 @@ if __name__ == "__main__":
     window_size = 30
     # quantile = 0.5
 
-    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs=quantile_X=samplesNumVec.txt".format(key_length)
+    GRAPHS = "QUANTILE" #"WINDOES" # QUANTILE
+    X= "samplesNumVec"
+    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}.txt".format(key_length,GRAPHS,X, window_size,quantile)
     f_data = open(f_data_path,"a+")
     f_data.write(' '.join(map(str,quantile_vec)))
     f_data.write('\n')

@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 import numpy as np
 import pandas as pd
 import key_stitching_functinos as func
@@ -35,24 +37,25 @@ if __name__ == "__main__":
     # path3 = "./samples/key500_probe300_good_decoded_samples_170Ksamp.txt"
     p_list = [path]
 
-
-    window_size_vec=[30, 25, 20] #each has its own graph
+    window_size_vec = [20, 25, 21, 26, 22, 27]  # each has its own graph
     quantile_vec=[0.6, 0.9, 0.8] #each has its own graph
     samples_num_vec=[100000, 300000 , 600000, 1000000, 2000000, 3500000] #bars section
     stitch_shift_size = 1
     key_length = n = len(key)
-    window_size = 30
-    # quantile = 0.5
+    window_size = None
+    quantile = 0.6
 
-    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs=quantile_X=samplesNumVec.txt".format(key_length)
+    GRAPHS = "WINDOES" # QUANTILE
+    X= "samplesNumVec"
+    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}.txt".format(key_length,GRAPHS,X, window_size,quantile)
     f_data = open(f_data_path,"a+")
-    f_data.write(' '.join(map(str,quantile_vec)))
+    f_data.write(' '.join(map(str,window_size_vec))) #f_data.write(' '.join(map(str,quantile_vec)))
     f_data.write('\n')
     f_data.write(' '.join(map(str,samples_num_vec)))
     f_data.write('\n')
     f_data.close()
     i = 1
-    for quantile in quantile_vec:
+    for window_size in window_size_vec:
         start_samp = 0
         result_dict = {}
         for samples_num in samples_num_vec:
