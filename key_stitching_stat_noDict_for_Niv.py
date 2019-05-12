@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
 
 
-                        summryMy = open(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + "/summryMy.txt", "a+")
+                        summryMy = open(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + "/summryMy.txt", "w")
 
                         result_df, result_dict = func.build_samples_continues(key=key,
                                                                               sample_begin=start_samp,
