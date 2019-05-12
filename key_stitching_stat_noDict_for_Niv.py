@@ -38,14 +38,18 @@ def Error(error):
 if __name__ == "__main__":
 
     SIMULATION = True
-    ALLOW_CYCLES = False
+
+    DIR_RESULT_PATH = "./results"
+    DIR_PATH_SIMULATION = "/simulation"
+
+
     try:
-        os.mkdir("./results/")
+        os.mkdir(DIR_RESULT_PATH)
     except:
         pass
 
     try:
-        os.mkdir("./results/simulation/")
+        os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION)
     except:
         pass
 
@@ -77,25 +81,30 @@ if __name__ == "__main__":
     i=0
     for key_length in key_length_vec:
         key = func.init_key(key_length, -1)
-        DIR_RESULT_PATH = "./results/simulation/key_length{0}/".format(key_length)
+        KEY_LENGTH_PATH = "/key_length{0}".format(key_length)
+        DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH
+
         try:
-            os.mkdir(DIR_RESULT_PATH)
+            os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH)
         except:
             pass
         tableResult["key_length{0}".format(key_length)] = {}
 
         for sample_len in sample_len_vec:
-            DIR_RESULT_PATH = DIR_RESULT_PATH + "/sample_len{0}/".format(sample_len)
+            SAMPLE_LEN_PATH = "/sample_len{0}".format(sample_len)
+
+            DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH
+
             try:
-                os.mkdir(DIR_RESULT_PATH)
+                os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH)
             except:
                 pass
             tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)] = {}
 
             for window_size in window_size_vec:
-                DIR_RESULT_PATH = DIR_RESULT_PATH + "/window_size{0}/".format(window_size)
+                WINDOWS_SIZE_PATH = "/window_size{0}".format(window_size)
                 try:
-                    os.mkdir(DIR_RESULT_PATH)
+                    os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH)
                 except:
                     pass
                 tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)]["window_size{0}".format(window_size)] = {}
@@ -104,9 +113,9 @@ if __name__ == "__main__":
 
                 for error in error_vec:
                     flip_probability, delete_probability, insert_probability = Error(error)
-                    DIR_RESULT_PATH = DIR_RESULT_PATH + "/error{0}/".format(error)
+                    ERROR_PATH = "/error{0}".format(error)
                     try:
-                        os.mkdir(DIR_RESULT_PATH)
+                        os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH)
                     except:
                         pass
                     tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)][
@@ -116,9 +125,9 @@ if __name__ == "__main__":
                     start_samp = 0
                     result_dict = {}
                     for samples_num in samples_num_vec:
-                        DIR_RESULT_PATH = DIR_RESULT_PATH + "/samples_num{0}/".format(samples_num)
+                        SAMPLE_NUM_PATH = "/samples_num{0}".format(samples_num)
                         try:
-                            os.mkdir(DIR_RESULT_PATH)
+                            os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH)
                         except:
                             pass
                         tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)][
@@ -126,8 +135,8 @@ if __name__ == "__main__":
 
 
 
-                        tableFile = open("./results/simulation/table.txt", "a+")
-                        summryMy = open(DIR_RESULT_PATH + "summryMy.txt", "a+")
+
+                        summryMy = open(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + "/summryMy.txt", "a+")
 
                         result_df, result_dict = func.build_samples_continues(key=key,
                                                                               sample_begin=start_samp,
@@ -201,6 +210,7 @@ if __name__ == "__main__":
                         tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)][
                             "window_size{0}".format(window_size)]["error{0}".format(error)]["samples_num{0}".format(samples_num)] = dist
 
+                        tableFile = open("./results/simulation/table.txt", "w")
                         tableFile.write(str(tableResult))
                         tableFile.close()
 
