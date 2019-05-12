@@ -1,6 +1,7 @@
 #! /usr/bin/python
 import matplotlib.pyplot as plt
 import numpy as np
+import math 
 
 def side_by_side_bars(x,y_vec,colors,title,ind,width,x_label, y_label):
 	x=np.array(x)
@@ -13,12 +14,15 @@ def side_by_side_bars(x,y_vec,colors,title,ind,width,x_label, y_label):
 	width_f=0.27 
 	rects=[]
 	
-	
 	for y,c in zip(y_vec,colors):
 		rect= ax.bar(ind,width_f,color=c)
 		rects.append(rect)
+
 		ax.bar(x-i, y,width=width,color=c,align='center')
+		for x_tag, tolabel in zip(x,y):
+			ax.text(x_tag-i + .25, tolabel + 3,str(tolabel), color='k',  ha='center')
 		i+=width
+		
 	ax.legend( (rects), ('dist', 'I', 'D','F','|L|') )
 	
 
@@ -33,11 +37,19 @@ if __name__ == "__main__":
 	print "bla"
 	y_label = "distance"
 	
-	f_data=open("./results/data.txt","r")
+	f_data=open("./results/NoDict/simulation/CASE5/dataForGraph_Key=None_Graphs=KEYLENGTH_x=megicNumVec_windowSize=30_quantile=0.6.txt","r")
+	#f_data=open("./results/data.txt","r")
 	lines=f_data.readlines()
-	window_size= map(int, lines[0].split(" "))  
-	sump_num=map(int, lines[1].split(" ")) 
+	window_size= map(int, lines[0].split(" "))
+	sump_num=map(int, lines[1].split(" "))
+	
 
+	if len(sump_num)>1:
+		diff = min([j-i for i, j in zip(sump_num[:-1], sump_num[1:])])
+		width = math.ceil((diff/4)/2);
+	else: 
+		width=12000
+	
 	colors=['k','b','r','g','purple']
 
 	i=1
@@ -52,10 +64,11 @@ if __name__ == "__main__":
 			deletions.append(line[1])
 			insertions.append(line[2])			
 			flips.append(line[3])
-			length.append(512-line[4])
+			length.append(line[4])
 		y_vec=[dist,insertions, deletions, flips, length]
 		title= y_label+" results for "+graph_name+" "+str(w)
-		side_by_side_bars(sump_num,y_vec,colors,title,ind,12000,x_label,y_label)
+		
+		side_by_side_bars(sump_num,y_vec,colors,title,ind,width,x_label,y_label)
 
 	f_data.close()
 	plt.show()
