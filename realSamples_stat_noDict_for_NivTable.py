@@ -60,10 +60,8 @@ if __name__ == "__main__":
 
     i=0
     for key_length in key_length_vec:
-        key = func.init_key(key_length, -1)
         KEY_LENGTH_PATH = "/key_length{0}".format(key_length)
         DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + KEY_LENGTH_PATH
-
         try:
             os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + KEY_LENGTH_PATH)
         except:
@@ -90,8 +88,6 @@ if __name__ == "__main__":
                 except:
                     pass
                 tableResult["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)]["window_size{0}".format(window_size)] = {}
-
-
 
                 for error in error_vec:
                     ERROR_PATH = "/error{0}".format(error)
