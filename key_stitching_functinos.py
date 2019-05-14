@@ -877,12 +877,12 @@ def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_point
 
 
 
-
-'''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YAEL~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
+'''YAEL'''
 def tow_dim_arr2file(pathes,f_path):
     for p in pathes:
         f_path.write(' '.join(map(str,p)))
         f_path.write("\n")
+
 def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndexArray,tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
 
     for idx1 in xrange(start_idx,end_idx):
@@ -901,6 +901,7 @@ def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,sav
                     tree_pointers[idx1].append({'next': idx2,'shift': stitch_shift})
                     if idx2 not in rm_right: rm_right.append(idx2)
     print "done: "+str(start_idx)+"-"+str(end_idx)
+
 def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size):
     '''
     Build the tree pointers
@@ -956,6 +957,7 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
     edge_left_pointers= list(set(edge_left_pointers) - set(remove))
 
     return tree_pointers, edge_left_pointers
+
 def stitch_tree_iterative_no_thread(tree_pointers, edge_left_pointers,min_len_path=400): #at first, send the window_size as a shift
     '''
     stitch the tree itterativly (DFS)
@@ -1208,7 +1210,6 @@ def stitch_tree_recurcive_less_mem_with_thread(common_samples_df, tree_pointers,
         f1.close()
         f2.close()
 
-#dont know if work
 
 def stitch_tree_iterative_thread(tree_pointers, edge_left_pointers,min_len_path,f_path,window_size): #at first, send the window_size as a shift
     '''
