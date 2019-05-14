@@ -26,10 +26,8 @@ if __name__ == "__main__":
 
     print "\n\n~~Start Gabi Algorithem ...~~\n\n"
 
-
-
-    hex_key_500="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
-    key=''.join(func.hex2bin_map[i] for i in hex_key_500)
+    hex_key_512="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
+    key=''.join(func.hex2bin_map[i] for i in hex_key_512)
     path = "./samples/key500_probe300_good_decoded_samples_486K.txt"
     path2 = "./samples/key500_probe300_good_decoded_samples_486KV2.txt"
     path3 = "./samples/key500_probe300_good_decoded_samples_170Ksamp.txt"

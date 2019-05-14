@@ -33,10 +33,11 @@ if __name__ == "__main__":
 
     print "\n\n~~Start Gabi Algorithem...~~\n\n"
 
+    hex_key_512="023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
+    key=''.join(func.hex2bin_map[i] for i in hex_key_512)
 
 
-
-    key_length_vec = [512]
+    key_length_vec = [len(key)]
     probe_len_vec = [170,230]
     # megic_num_vec = [10, 30, 50]
     samples_num_vec = [100000, 500000, 1000000, 2000000, 3000000, 4000000, 5000000]
