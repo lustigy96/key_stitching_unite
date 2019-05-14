@@ -960,7 +960,7 @@ def build_shift_pointers_noDict_opposite(common_samples_df, stitch_shift_size, w
     print 'DONE!'
     return all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift
 
-def stitch_boris_noDict(common_samples_df, all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift,allowCycle):
+def stitch_boris_noDict_opposite(common_samples_df, all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift,allowCycle):
     print 'stitch_boris_oposite'
     common_samples_array = np.array(common_samples_df['sample'])
     #those are not the left of anyone. they are the most right.
