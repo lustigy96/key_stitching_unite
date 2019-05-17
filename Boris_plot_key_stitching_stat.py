@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 if __name__ == "__main__":
-
+    SUBPLOTS = True
 
     try:
         os.mkdir("./results/")
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # path_to_file = raw_input('Enter path to the data file (for example: ./results/data.txt) default=0: ')
     path_to_file = "0"
     if path_to_file == '0':
-        path_to_file = "./results/simulation/CASE5/dataForGraph_Key=None_Graphs=KEYLENGTH_x=megicNumVec_windowSize=30_quantile=0.6.txt"
+        path_to_file = "./results/NoDict/simulation/CASE5/dataForGraph_Key=None_Graphs=KEYLENGTH_x=megicNumVec_windowSize=30_quantile=0.6.txt"
 
     f_data = open(path_to_file,"r")
     lines = f_data.readlines()
@@ -35,21 +35,19 @@ if __name__ == "__main__":
     if x_label == '0':
         x_label= "samplesNumVec"
 
-    # dict = {"DIST":None, "I":None, "D":None,"F":None, "|L|":None}
-    # fig = tools.make_subplots(rows=len(graphs), cols=1)
-    # fig = tools.make_subplots(rows=1, cols=1)
-    # fig['layout'].update(title='range25to30')
-    # data = []
-    # subplot_titles = []
-    #
-    i = 1
+
+    if SUBPLOTS:
+        fig = tools.make_subplots(rows=len(graphs), cols=1, subplot_titles= tuple(graphs))
+        fig['layout'].update(title=str(graph_name))
+
+
+    j= i = 1
     for graph in graphs:
         name = '{0} = {1}'.format(graph_name,graph)
         trace=[]
         dist, insertions, deletions, flips, length = [], [], [], [], []
         for element in x:
             i += 1
-
             line = np.array(lines[i].split(" ")).astype(int)
             dist.append(line[0])
             deletions.append(line[1])
@@ -60,41 +58,59 @@ if __name__ == "__main__":
         trace_dist = go.Bar(
             x=x,
             y=dist,
-            name="dist"
+            text=dist,
+            textposition='auto',
+            name="dist{0}".format(graph)
         )
 
         trace_deletions = go.Bar(
             x=x,
             y=deletions,
-            name="deletions"
+            text=deletions,
+            textposition='auto',
+            name="deletions{0}".format(graph)
         )
 
         trace_insertions = go.Bar(
             x=x,
             y=insertions,
-            name="insertions"
+            text=insertions,
+            textposition='auto',
+            name="insertions{0}".format(graph)
         )
 
         trace_flips = go.Bar(
             x=x,
             y=flips,
-            name="flips"
+            text=flips,
+            textposition='auto',
+            name="flips{0}".format(graph)
         )
 
         trace_length = go.Bar(
             x=x,
             y=length,
-            name="length"
+            text=length,
+            textposition='auto',
+            name="length{0}".format(graph)
         )
 
-        layout = go.Layout(
-            title=name
-        )
 
-        data = [trace_dist,trace_deletions,trace_insertions,trace_flips,length ]
-        fig = go.Figure(data=data,layout=layout)
-        # fig.append_trace(trace, i, 1)
-        # i += 1
+
+        data = [trace_dist,trace_deletions,trace_insertions,trace_flips,trace_length ]
+
+        if SUBPLOTS:
+            fig.append_trace(trace_dist, j, 1)
+            fig.append_trace(trace_deletions, j, 1)
+            fig.append_trace(trace_insertions, j, 1)
+            fig.append_trace(trace_flips, j, 1)
+            fig.append_trace(trace_length, j, 1)
+            j += 1
+        else:
+            layout = go.Layout(title=str(name))
+            fig = go.Figure(data=data, layout=layout)
+            ply.plot(fig, filename='./results/{0}.html'.format(name))
 
         # Create a figure
-        ply.plot(fig, filename='./results/{0}.html'.format(name))
+    if SUBPLOTS:
+        ply.plot(fig, filename='./results/{0}.html'.format(graph_name))

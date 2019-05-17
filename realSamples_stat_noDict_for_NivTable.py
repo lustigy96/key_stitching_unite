@@ -185,7 +185,7 @@ if __name__ == "__main__":
                         tableResult["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
                             "window_size{0}".format(window_size)]["error{0}".format(error)]["samples_num{0}".format(samples_num)] = dist
 
-                        tableFile = open(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + "/table.txt", "w")
+                        tableFile = open(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + "/real_table{0}.txt".format(key_length), "w")
                         tableFile.write(str(tableResult))
                         tableFile.close()
 
