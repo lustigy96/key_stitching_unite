@@ -7,8 +7,9 @@ import os
 
 def Probe(probe_len):
     if probe_len == 170:
-        path170 = "./samples/good_decoded_samples_probe170.txt"
-        return [path170]
+        path170_1 = "./samples/good_decoded_samples_probe=170_num=4.2K.txt"
+        path170_2 = "./samples/good_decoded_samples_probe=170_num=19.9K.txt"
+        return [path170_1,path170_2]
     elif probe_len == 230:
         path230 = "./samples/good_decoded_samples_probe=230_num=5.1M.txt"
         return [path230]
@@ -16,6 +17,9 @@ def Probe(probe_len):
         path300_1 = "./samples/good_decoded_samples_probe300_num=3.4M_file=1.txt"
         path300_2 = "./samples/good_decoded_samples_probe300_num=14k_file=2.txt"
         return [path300_1, path300_2]
+    elif probe_len == 500:
+        path500 = "./samples/good_decoded_samples_probe=500_num=50.8K.txt"
+        return [path500]
 
 if __name__ == "__main__":
 
@@ -42,7 +46,7 @@ if __name__ == "__main__":
 
 
     key_length_vec = [len(key)]
-    probe_len_vec = [230,300]
+    probe_len_vec = [170,230,300, 500]
     # megic_num_vec = [10, 30, 50]
     samples_num_vec = [100000, 500000, 1000000, 2000000, 3000000, 4000000, 5000000]
     stitch_vec = [1]
