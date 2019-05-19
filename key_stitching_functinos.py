@@ -746,6 +746,118 @@ def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_poin
     print "done stitch_boris2"
     return retrieved_key
 
+
+def build_shift_pointers_noDict_opposite(common_samples_df, stitch_shift_size, window_size):
+    '''
+    build DAG where snippets are connected if they can be stitched by a small shift
+    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
+    '''
+    common_samples_array = np.array(common_samples_df['sample'])
+    common_count_array = np.array(common_samples_df['count'])
+
+    print 'building DAG...'
+
+    '''************************************************************************************'''
+    # build array 2^window, and put counted value in each index correspend for the samples
+    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
+
+    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
+    orderArrayMaxToMin = np.zeros(len(common_samples_array), dtype=np.uint32)
+    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
+
+    #for stich perfomance
+    shift_pointers_right = np.zeros(2 ** window_size, dtype=np.uint8)
+    shift_pointers_right_node_left = np.zeros(2 ** window_size, dtype=np.uint32)
+    shift_pointers_right_node_right = np.zeros(2 ** window_size, dtype=np.uint32)
+    shift_pointers_right_node_shift = np.zeros(2 ** window_size, dtype=np.uint8)
+
+    shift_pointers_left = np.zeros(2 ** window_size, dtype=np.uint8)
+    shift_pointers_left_node_right = np.zeros(2 ** window_size, dtype=np.uint32)
+    shift_pointers_left_node_left = np.zeros(2 ** window_size, dtype=np.uint32)
+    shift_pointers_left_node_shift = np.zeros(2 ** window_size, dtype=np.uint8)
+
+    for idx, sample in enumerate(common_samples_array): #initiate arrays
+        b = BitArray(bin=sample)
+        all2PowerWindowArray[b.uint] = common_count_array[idx]
+        all2PowerWindowArray_idx[b.uint] = idx
+        orderArrayMaxToMin[idx] = b.uint
+        shift_pointers_right[b.uint] = 1 #exist
+        shift_pointers_left[b.uint] = 1 #exist
+
+    idxMax = len(common_samples_array) + 1
+    '''************************************************************************************'''
+
+    for i in xrange(len(common_samples_array)):  # run over all the order of the samples
+        #left_sample_number = orderArrayMaxToMin[i]
+        right_sample_number = orderArrayMaxToMin[i]#~
+        if i % 10000 == 0:
+            print "i = {0}".format(i)
+
+        if (all2PowerWindowArray[right_sample_number] > 0):
+            right_sample = common_samples_array[all2PowerWindowArray_idx[right_sample_number]]
+            mask = 1
+            for stitch_shift in range(1, stitch_shift_size + 1):
+                base_tmp = right_sample_number >> stitch_shift  # shift the bit - oposite
+
+                left_sample_idx = idxMax
+                for j in xrange(2 ** stitch_shift):     #to choose the most common samples continious
+                    temp= base_tmp|( j << (window_size - stitch_shift)) #mask to the MSBits, checked!
+                    if (all2PowerWindowArray[temp] > 0):
+                        if (all2PowerWindowArray_idx[temp] < left_sample_idx):
+                            left_sample_idx = all2PowerWindowArray_idx[temp]
+                            left_sample_number = temp
+
+                if left_sample_idx != idxMax: #continious found
+                    if shift_pointers_right[right_sample_number] != 2:
+                        shift_pointers_right[right_sample_number] = 2 #exist+stitch to someone
+                        shift_pointers_right_node_left[right_sample_number] = left_sample_number
+                        shift_pointers_right_node_right[right_sample_number] = right_sample_number
+                        shift_pointers_right_node_shift[right_sample_number] = stitch_shift
+
+                    if shift_pointers_left[left_sample_number] != 2:
+                        shift_pointers_left[left_sample_number] = 2 #exist+stitch to someone
+                        shift_pointers_left_node_right[left_sample_number] = right_sample_number
+                        shift_pointers_left_node_left[left_sample_number] = left_sample_number
+                        shift_pointers_left_node_shift[left_sample_number] = stitch_shift
+                    break
+    print 'DONE!'
+    return all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift
+def stitch_boris_noDict_opposite(common_samples_df, all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift,allowCycle=False, key_length=None):
+    print 'stitch_boris_oposite'
+    common_samples_array = np.array(common_samples_df['sample'])
+    #those are not the left of anyone. they are the most right.
+    start_samples_number_array = np.where(shift_pointers_left==1)[0]
+
+    retrieved_key = []
+    i=0
+    for start_sample_number in start_samples_number_array:
+        i+=1
+        if i % 10000 == 0:
+            print "i = {0}".format(i)
+            print 'START SAMPLE NUMBER: ' + str(start_sample_number)
+        start_sample = common_samples_array[all2PowerWindowArray_idx[start_sample_number]]
+        curr_sample = start_sample
+        curr_sample_number = start_sample_number
+        path = [all2PowerWindowArray_idx[curr_sample_number]]
+        curr_key = curr_sample
+        while shift_pointers_right[curr_sample_number] == 2:
+            curr_sample_left_neighbor_number = shift_pointers_right_node_left[curr_sample_number]
+            curr_sample_left_neighbor = common_samples_array[all2PowerWindowArray_idx[curr_sample_left_neighbor_number]]
+            shift = shift_pointers_right_node_shift[curr_sample_number]
+            # curr_key = curr_sample_left_neighbor + curr_key[(-1)*shift:]
+            curr_key = curr_sample_left_neighbor[0:shift] + curr_key
+            curr_sample_number = curr_sample_left_neighbor_number
+            if not allowCycle:
+                if all2PowerWindowArray_idx[curr_sample_number] in path:
+                    break
+                else:
+                    path.append(all2PowerWindowArray_idx[curr_sample_number])
+
+        #retrieved_key += [curr_key]
+        retrieved_key +=[curr_key]
+    print "done stitch_boris2"
+    return retrieved_key
+
 # debug
 resultCompareGabiAndMe = True
 def compareGabiAndMe(shift_pointers_Boris, shift_pointers_Gabi):
@@ -883,117 +995,6 @@ def tow_dim_arr2file(pathes,f_path):
     for p in pathes:
         f_path.write(' '.join(map(str,p)))
         f_path.write("\n")
-
-def build_shift_pointers_noDict_opposite(common_samples_df, stitch_shift_size, window_size):
-    '''
-    build DAG where snippets are connected if they can be stitched by a small shift
-    only the highest-ranking snippet that can be stitched is used, where the snippets array is assumed to be sorted by popularity
-    '''
-    common_samples_array = np.array(common_samples_df['sample'])
-    common_count_array = np.array(common_samples_df['count'])
-
-    print 'building DAG...'
-
-    '''************************************************************************************'''
-    # build array 2^window, and put counted value in each index correspend for the samples
-    # for example if sample = 00000000000000000001  in all2PowerWindowArray[1]=X where X is number times this sample was appeard
-
-    all2PowerWindowArray = np.zeros(2 ** window_size, dtype=np.uint32)
-    orderArrayMaxToMin = np.zeros(len(common_samples_array), dtype=np.uint32)
-    all2PowerWindowArray_idx = np.zeros(2 ** window_size, dtype=np.uint32)
-
-    #for stich perfomance
-    shift_pointers_right = np.zeros(2 ** window_size, dtype=np.uint8)
-    shift_pointers_right_node_left = np.zeros(2 ** window_size, dtype=np.uint32)
-    shift_pointers_right_node_right = np.zeros(2 ** window_size, dtype=np.uint32)
-    shift_pointers_right_node_shift = np.zeros(2 ** window_size, dtype=np.uint8)
-
-    shift_pointers_left = np.zeros(2 ** window_size, dtype=np.uint8)
-    shift_pointers_left_node_right = np.zeros(2 ** window_size, dtype=np.uint32)
-    shift_pointers_left_node_left = np.zeros(2 ** window_size, dtype=np.uint32)
-    shift_pointers_left_node_shift = np.zeros(2 ** window_size, dtype=np.uint8)
-
-    for idx, sample in enumerate(common_samples_array): #initiate arrays
-        b = BitArray(bin=sample)
-        all2PowerWindowArray[b.uint] = common_count_array[idx]
-        all2PowerWindowArray_idx[b.uint] = idx
-        orderArrayMaxToMin[idx] = b.uint
-        shift_pointers_right[b.uint] = 1 #exist
-        shift_pointers_left[b.uint] = 1 #exist
-
-    idxMax = len(common_samples_array) + 1
-    '''************************************************************************************'''
-
-    for i in xrange(len(common_samples_array)):  # run over all the order of the samples
-        #left_sample_number = orderArrayMaxToMin[i]
-        right_sample_number = orderArrayMaxToMin[i]#~
-        if i % 10000 == 0:
-            print "i = {0}".format(i)
-
-        if (all2PowerWindowArray[right_sample_number] > 0):
-            right_sample = common_samples_array[all2PowerWindowArray_idx[right_sample_number]]
-            mask = 1
-            for stitch_shift in range(1, stitch_shift_size + 1):
-                base_tmp = right_sample_number >> stitch_shift  # shift the bit - oposite
-
-                left_sample_idx = idxMax
-                for j in xrange(2 ** stitch_shift):     #to choose the most common samples continious
-                    temp= base_tmp|( j << (window_size-stitch_shift)) #mask to the MSBits, checked!
-                    if (all2PowerWindowArray[temp] > 0):
-                        if (all2PowerWindowArray_idx[temp] < left_sample_idx):
-                            left_sample_idx = all2PowerWindowArray_idx[temp]
-                            left_sample_number = temp
-
-                if left_sample_idx != idxMax: #continious found
-                    if shift_pointers_right[right_sample_number] != 2:
-                        shift_pointers_right[right_sample_number] = 2 #exist+stitch to someone
-                        shift_pointers_right_node_left[right_sample_number] = left_sample_number
-                        shift_pointers_right_node_right[right_sample_number] = right_sample_number
-                        shift_pointers_right_node_shift[right_sample_number] = stitch_shift
-
-                    if shift_pointers_left[left_sample_number] != 2:
-                        shift_pointers_left[left_sample_number] = 2 #exist+stitch to someone
-                        shift_pointers_left_node_right[left_sample_number] = right_sample_number
-                        shift_pointers_left_node_left[left_sample_number] = left_sample_number
-                        shift_pointers_left_node_shift[left_sample_number] = stitch_shift
-                    break
-    print 'DONE!'
-    return all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift
-
-def stitch_boris_noDict_opposite(common_samples_df, all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift,allowCycle):
-    print 'stitch_boris_oposite'
-    common_samples_array = np.array(common_samples_df['sample'])
-    #those are not the left of anyone. they are the most right.
-    start_samples_number_array = np.where(shift_pointers_left==1)[0]
-
-    retrieved_key = []
-    i=0
-    for start_sample_number in start_samples_number_array:
-        i+=1
-        if i % 10000 == 0:
-            print "i = {0}".format(i)
-            print 'START SAMPLE NUMBER: ' + str(start_sample_number)
-        start_sample = common_samples_array[all2PowerWindowArray_idx[start_sample_number]]
-        curr_sample = start_sample
-        curr_sample_number = start_sample_number
-        path = [all2PowerWindowArray_idx[curr_sample_number]]
-        curr_key = curr_sample
-        while shift_pointers_right[curr_sample_number] == 2:
-            curr_sample_left_neighbor_number = shift_pointers_right_node_left[curr_sample_number]
-            curr_sample_left_neighbor = common_samples_array[all2PowerWindowArray_idx[curr_sample_left_neighbor_number]]
-            shift = shift_pointers_right_node_shift[curr_sample_number]
-            curr_key = curr_sample_left_neighbor + curr_key[-shift:]
-            curr_sample_number = curr_sample_left_neighbor_number
-            if not allowCycle:
-                if all2PowerWindowArray_idx[curr_sample_number] in path:
-                    break
-                else:
-                    path.append(all2PowerWindowArray_idx[curr_sample_number])
-
-        #retrieved_key += [curr_key]
-        retrieved_key +=[curr_key]
-    print "done stitch_boris2"
-    return retrieved_key
 
 
 ####-------TREES-------#####

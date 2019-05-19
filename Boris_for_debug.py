@@ -27,7 +27,7 @@ if __name__ == "__main__":
     quantile = 0.6
     sample_len = 31
     key_length = 512
-    megic_num = 1
+    megic_num = 5
 
     if CASE==1:
         flip_probability = 0.05
@@ -54,58 +54,90 @@ if __name__ == "__main__":
         os.mkdir("./results/debug")
     except:
         pass
-    summryMy = open("./results/debug/summryMy_Debug_keyLength={0}_allowCycle={1}_shiftPointersMethod=GabiOptimized_windowSize={2}_simulation={3}_error={4}%.txt".format(key_length, ALLOW_CYCLES, window_size, SIMULATION, int(flip_probability*100)), "a+")
+    # try:
+    #     os.mkdir("./results/debug/simulation")
+    # except:
+    #     pass
+    try:
+        os.mkdir("./results/debug/simulation/keyLength{0}".format(key_length))
+    except:
+        pass
+
+    if SIMULATION:
+        summryMy = open("./results/debug/simulation/keyLength{0}/summryMy_Debug_windowSize={1}_error={2}%.txt".format(key_length, window_size, int(flip_probability*100)), "a+")
+
     samples_num = megic_num * (key_length - sample_len) * (sample_len - window_size)
-    samples_num = 2000
+    # samples_num = 2000
     result_df, result_dict = func.build_samples_continues(key=key, sample_begin=start_samp, sample_end=samples_num, sample_len=sample_len, window_size=window_size, flip_probability=flip_probability, delete_probability=delete_probability, insert_probability=insert_probability, result_dict=result_dict)
     start_samp = samples_num
     common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
 
-    shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
+    # shift_pointers_Gabi = func.build_shift_pointers_gabi_pure(common_samples_df, stitch_shift_size)
+
+
+
+    # start = datetime.datetime.now()
+    # shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = \
+    #     func.build_shift_pointers_position_better(common_samples_df=common_samples_df,
+    #                                                stitch_shift_size=stitch_shift_size,
+    #                                                window_size=window_size)
+    # retrieved_key = func.stitch_boris(common_samples_df=common_samples_df,
+    #                                   shift_pointers=shift_pointers_Boris,
+    #                                   all2PowerWindowArray_idx=all2PowerWindowArray_idx,
+    #                                   allowCycle=ALLOW_CYCLES,
+    #                                   key_length=key_length)
+    # took_time1 = datetime.datetime.now() - start
+    # candidate_key = max(retrieved_key, key=len)
+
+    # start = datetime.datetime.now()
+    # all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
+    #     func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
+    #                                                stitch_shift_size=stitch_shift_size,
+    #                                                window_size=window_size)
+    # retrieved_key2 = func.stitch_boris_noDict(common_samples_df=common_samples_df,
+    #                                     all2PowerWindowArray_idx=all2PowerWindowArray_idx,
+    #                                     shift_pointers_right_index=shift_pointers_right_index,
+    #                                     shift_pointers_right_index_left=shift_pointers_right_index_left,
+    #                                     shift_pointers_right_index_shift=shift_pointers_right_index_shift,
+    #                                     shift_pointers_left_index=shift_pointers_left_index,
+    #                                     shift_pointers_left_index_right=shift_pointers_left_index_right,
+    #                                     shift_pointers_left_index_shift=shift_pointers_left_index_shift)
+    # took_time2 = datetime.datetime.now() - start
+    # candidate_key2 = max(retrieved_key2, key=len)
+
 
 
 
     start = datetime.datetime.now()
-    shift_pointers_Boris, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin = \
-        func.build_shift_pointers_position_better(common_samples_df=common_samples_df,
+    all2PowerWindowArray_idx, shift_pointers_right, shift_pointers_right_node_left, shift_pointers_right_node_shift, shift_pointers_left, shift_pointers_left_node_right, shift_pointers_left_node_shift = \
+        func.build_shift_pointers_noDict_opposite(common_samples_df=common_samples_df,
                                                    stitch_shift_size=stitch_shift_size,
                                                    window_size=window_size)
-    retrieved_key = func.stitch_boris(common_samples_df=common_samples_df,
-                                      shift_pointers=shift_pointers_Boris,
-                                      all2PowerWindowArray_idx=all2PowerWindowArray_idx,
-                                      allowCycle=ALLOW_CYCLES,
-                                      key_length=key_length)
-    took_time1 = datetime.datetime.now() - start
-    candidate_key = max(retrieved_key, key=len)
-
-    start = datetime.datetime.now()
-    all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
-        func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
-                                                   stitch_shift_size=stitch_shift_size,
-                                                   window_size=window_size)
-    retrieved_key2 = func.stitch_boris_noDict(common_samples_df=common_samples_df,
+    retrieved_key3 = func.stitch_boris_noDict_opposite(common_samples_df=common_samples_df,
                                         all2PowerWindowArray_idx=all2PowerWindowArray_idx,
-                                        shift_pointers_right_index=shift_pointers_right_index,
-                                        shift_pointers_right_index_left=shift_pointers_right_index_left,
-                                        shift_pointers_right_index_shift=shift_pointers_right_index_shift,
-                                        shift_pointers_left_index=shift_pointers_left_index,
-                                        shift_pointers_left_index_right=shift_pointers_left_index_right,
-                                        shift_pointers_left_index_shift=shift_pointers_left_index_shift)
-    took_time2 = datetime.datetime.now() - start
-    candidate_key2 = max(retrieved_key2, key=len)
+                                        shift_pointers_right=shift_pointers_right,
+                                        shift_pointers_right_node_left=shift_pointers_right_node_left,
+                                        shift_pointers_right_node_shift=shift_pointers_right_node_shift,
+                                        shift_pointers_left=shift_pointers_left,
+                                        shift_pointers_left_node_right=shift_pointers_left_node_right,
+                                        shift_pointers_left_node_shift=shift_pointers_left_node_shift)
+    took_time3 = datetime.datetime.now() - start
+    candidate_key3 = max(retrieved_key3, key=len)
 
-    func.compareGabiAndMe(shift_pointers_Boris,shift_pointers_Gabi)
+    candidate_key =candidate_key3
 
-    func.compareDictAndNoDict(shift_pointers=shift_pointers_Boris,
-                              shift_pointers_right_index=shift_pointers_right_index,
-                              shift_pointers_left_index=shift_pointers_left_index,
-                              retrieved_key=retrieved_key,
-                              retrieved_key2=retrieved_key2)
+    # func.compareGabiAndMe(shift_pointers_Boris,shift_pointers_Gabi)
 
-    print "time for stitch_boris:"
-    print took_time1
-    print "time for stitch_boris2"
-    print took_time2
+    # func.compareDictAndNoDict(shift_pointers=shift_pointers_Boris,
+    #                           shift_pointers_right_index=shift_pointers_right_index,
+    #                           shift_pointers_left_index=shift_pointers_left_index,
+    #                           retrieved_key=retrieved_key,
+    #                           retrieved_key2=retrieved_key2)
+
+    # print "time for stitch_boris:"
+    # print took_time1
+    # print "time for stitch_boris2"
+    # print took_time2
 
 
     ## print results conclusion to file
