@@ -33,27 +33,24 @@ if __name__ == "__main__":
     key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key4096 = ''.join(func.hex2bin_map[i] for i in hex_key_4096)
 
-    key = key1024
-    # path = "/root/newDecodedSamples/newD_probe300_2_115k_of_3.9M_removeTrash=15/good_decoded_samples.txt"
-    path = "./new_1024_probe230/good_decoded_samples.txt"
-    # path2 = "/root/newDecodedSamples/newD_probe230_5.1M_of_5.5M_removeTrash=15/good_decoded_samples.txt"
-    # path2 = "./samples/good_decoded_samples_probe300_1.txt"
-    # path2 = "./samples/key500_probe300_good_decoded_samples_486KV2.txt"
-    # path3 = "./samples/key500_probe300_good_decoded_samples_170Ksamp.txt"
+    key = key512
+
+    path = "./new_512_probe230/good_decoded_samples.txt"
+
     p_list = [path]
 
-    window_size_vec = [30, 20]  # each has its own graph
+    window_size_vec = [30]  # each has its own graph
     quantile_vec = [0.6, 0.9, 0.8]  # each has its own graph
-    samples_num_vec = [100000, 200000, 300000]  # bars section
+    samples_num_vec = [400000]  # bars section
     stitch_shift_size = 1
     key_length = n = len(key)
     window_size = None
-    quantile = 0.8
+    quantile = 0.95
 
     GRAPHS = "WINDOES"  # QUANTILE
     X = "samplesNumVec"
-    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}_opposite={5}.txt".format(
-        key_length, GRAPHS, X, window_size, quantile, opposite)
+    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}.txt".format(
+        key_length, GRAPHS, X, window_size, quantile)
     f_data = open(f_data_path, "a+")
     f_data.write(' '.join(map(str, window_size_vec)))  # f_data.write(' '.join(map(str,quantile_vec)))
     f_data.write('\n')
@@ -67,13 +64,14 @@ if __name__ == "__main__":
         for samples_num in samples_num_vec:
             f_data = open(f_data_path, "a+")
             summryMy = open(
-                "./results/realChannel/summryMy_keyLength={0}_windowSize={1}_quantile={2}_opposite{3}.txt".format(
-                    key_length, window_size, quantile, opposite), "a+")
+                "./results/realChannel/summryMy_keyLength={0}_windowSize={1}_quantile={2}_withOpposite={3}_start_samp={4}_sample_end={5}.txt".format(
+                    key_length, window_size, quantile, opposite, start_samp, start_samp + samples_num), "a+")
 
             result_df, result_dict = func.build_samples_from_file(p_list=p_list, window_size=window_size,
-                                                                  sample_start=start_samp, sample_end=samples_num,
+                                                                  sample_start=start_samp,
+                                                                  sample_end=start_samp + samples_num,
                                                                   result_dict=result_dict)
-            start_samp = samples_num
+
             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
 
             if regular == True:
@@ -109,11 +107,11 @@ if __name__ == "__main__":
             candidate_key_opposite = max(retrieved_key_opposite, key=len)
 
             ## print results conclusion to file
-            string = "\nRESULT_NUMBER = {0}".format(i)
+            string = "\n\n\n\nRESULT_NUMBER = {0}".format(i)
             summryMy.write(string)
             string = "\noriginal key(len={0}):\n".format(key_length) + key
             summryMy.write(string)
-            string = "\n\ncandidate_key_regular(len={0}):\n".format(len(candidate_key_regular)) + candidate_key_regular
+            string = "\ncandidate_key_regular(len={0}):\n".format(len(candidate_key_regular)) + candidate_key_regular
             summryMy.write(string)
             string = "\nkey.find(candidate_key_regular) = " + str(key.find(candidate_key_regular))
             summryMy.write(string)
@@ -142,12 +140,31 @@ if __name__ == "__main__":
             summryMy.write(string)
             summryMy.close()
 
+            retrievedKeyRegularFile = open(
+                "./results/realChannel/retrievedKeyRegularFile={0}_windowSize={1}_quantile={2}_start_samp={3}_sample_end={4}.txt".format(
+                    key_length, window_size, quantile, start_samp, start_samp + samples_num), "a+")
+            for cankey in retrieved_key_regular:
+                if len(cankey) > 0.9 * len(key):
+                    retrievedKeyRegularFile.write(cankey)
+                    retrievedKeyRegularFile.write("\n")
+            retrievedKeyRegularFile.close()
+
+            retrievedKeyOppositeFile = open(
+                "./results/realChannel/retrievedKeyOppositeFile={0}_windowSize={1}_quantile={2}_start_samp={3}_sample_end={4}.txt".format(
+                    key_length, window_size, quantile, start_samp, start_samp + samples_num), "a+")
+            for cankey in retrieved_key_opposite:
+                if len(cankey) > 0.9 * len(key):
+                    retrievedKeyOppositeFile.write(cankey)
+                    retrievedKeyOppositeFile.write("\n")
+            retrievedKeyOppositeFile.close()
+
             dist = conclusion  # func.levenshtein_edit_dist(candidate_key,key, False)[0]
             f_data.write(
                 str(dist['DIST']) + " " + str(dist['I']) + " " + str(dist['D']) + " " + str(dist['F']) + " " + str(
                     len(candidate_key_regular)) + "\n")
             f_data.close()
             i += 1
+            start_samp = samples_num
 
 
 
