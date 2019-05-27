@@ -170,10 +170,9 @@ if __name__ == "__main__":
 
                                 retrievedKeysFile = open(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/retrievedKeys.txt", "w")
                                 summryMy = open(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH +  "/summryMy.txt", "w")
+                                retrieved_key = None
 
-
-
-                                if method == "oppsite":
+                                if method == "Opposite":
                                     all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
                                         func.build_shift_pointers_noDict(common_samples_df=common_samples_df,
                                                                          stitch_shift_size=stitch_shift_size,
@@ -190,7 +189,7 @@ if __name__ == "__main__":
 
 
 
-                                elif method == "notOppiste":
+                                elif method == "notOpposite":
                                     all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift = \
                                         func.build_shift_pointers_noDict_opposite(common_samples_df=common_samples_df,
                                                                          stitch_shift_size=stitch_shift_size,
