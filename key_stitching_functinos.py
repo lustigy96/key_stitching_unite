@@ -523,7 +523,7 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
     common_samples_array = np.array(common_samples_df['sample'])
     common_count_array = np.array(common_samples_df['count'])
 
-    print 'building DAG...'
+    print 'building DAG_Dict...'
     shift_pointers = {'right_index': {}, 'left_index': {}}
 
     '''************************************************************************************'''
@@ -574,7 +574,7 @@ def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, w
                                                                      'left_sample': left_sample, 'shift': stitch_shift}
                     break
 
-    print 'DONE!'
+    print 'DONE building DAG_Dict!'
     return shift_pointers, all2PowerWindowArray, all2PowerWindowArray_idx, orderArrayMaxToMin
 def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, allowCycle=False, key_length=None ):
     '''
@@ -584,7 +584,7 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
     '''
     #    shift_pointers_right_index_df = pd.DataFrame(shift_pointers['right_index']).transpose()
     #    shift_pointers_left_index_df = pd.DataFrame(shift_pointers['left_index']).transpose()
-    print 'stitch_boris'
+    print 'stitch_boris_Dict'
     common_samples_array = np.array(common_samples_df['sample'])
 
     start_samples = []
@@ -628,7 +628,7 @@ def stitch_boris(common_samples_df, shift_pointers, all2PowerWindowArray_idx, al
             #         break
         # if not cycle_break:
         retrieved_key += [curr_key]
-    print "done stitch_boris"
+    print "done stitch_boris_Dict"
     return retrieved_key
 
 def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_size):
@@ -639,7 +639,7 @@ def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_siz
     common_samples_array = np.array(common_samples_df['sample'])
     common_count_array = np.array(common_samples_df['count'])
 
-    print 'building DAG...'
+    print 'building DAG_noDict...'
 
     '''************************************************************************************'''
     # build array 2^window, and put counted value in each index correspend for the samples
@@ -704,10 +704,10 @@ def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_siz
                         shift_pointers_left_index_left[left_sample_number] = left_sample_number
                         shift_pointers_left_index_shift[left_sample_number] = stitch_shift
                     break
-    print 'DONE!'
+    print 'DONE building DAG_noDict!'
     return all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift
 def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift, allowCycle=False, key_length=None):
-    print 'stitch_boris2'
+    print 'stitch_boris_noDict...'
     common_samples_array = np.array(common_samples_df['sample'])
 
     # start_samples = []
@@ -743,7 +743,7 @@ def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_poin
                     path.append(all2PowerWindowArray_idx[curr_sample_number])
 
         retrieved_key += [curr_key]
-    print "done stitch_boris2"
+    print "done stitch_boris_noDict"
     return retrieved_key
 
 
@@ -755,7 +755,7 @@ def build_shift_pointers_noDict_opposite(common_samples_df, stitch_shift_size, w
     common_samples_array = np.array(common_samples_df['sample'])
     common_count_array = np.array(common_samples_df['count'])
 
-    print 'building DAG...'
+    print 'building DAG_noDict_opposite...'
 
     '''************************************************************************************'''
     # build array 2^window, and put counted value in each index correspend for the samples
@@ -820,10 +820,10 @@ def build_shift_pointers_noDict_opposite(common_samples_df, stitch_shift_size, w
                         shift_pointers_left_index_left[left_sample_number] = left_sample_number
                         shift_pointers_left_index_shift[left_sample_number] = stitch_shift
                     break
-    print 'DONE!'
+    print 'DONE building DAG_noDict_opposite!'
     return all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift
 def stitch_boris_noDict_opposite(common_samples_df,  all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift, allowCycle=False, key_length=None):
-    print 'stitch_boris_oposite'
+    print 'stitch_boris_noDict_oposite'
     common_samples_array = np.array(common_samples_df['sample'])
     #those are not the left of anyone. they are the most right.
     start_samples_number_array = np.where(shift_pointers_left_index==1)[0]
@@ -855,7 +855,7 @@ def stitch_boris_noDict_opposite(common_samples_df,  all2PowerWindowArray_idx, s
 
         #retrieved_key += [curr_key]
         retrieved_key +=[curr_key]
-    print "done stitch_boris2"
+    print "done stitch_boris_noDict_oposite"
     return retrieved_key
 
 # debug
