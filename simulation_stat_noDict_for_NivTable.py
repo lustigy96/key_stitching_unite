@@ -127,6 +127,18 @@ if __name__ == "__main__":
                         tableResult["key_length{0}".format(key_length)]["sample_len{0}".format(sample_len)][
                             "window_size{0}".format(window_size)]["error{0}".format(error)]["samples_num{0}".format(samples_num)] = {}
 
+
+                        result_df, result_dict = func.build_samples_continues(key=key,
+                                                                              sample_begin=start_samp,
+                                                                              sample_end=samples_num,
+                                                                              sample_len=sample_len,
+                                                                              window_size=window_size,
+                                                                              flip_probability=flip_probability,
+                                                                              delete_probability=delete_probability,
+                                                                              insert_probability=insert_probability,
+                                                                              result_dict=result_dict)
+                        start_samp = samples_num
+
                         for quantile in quantile_vec:
                             QUANTILE_NUM_PATH = "/quantile{0}".format(quantile)
                             try:
@@ -139,16 +151,7 @@ if __name__ == "__main__":
                                 "window_size{0}".format(window_size)]["error{0}".format(error)][
                                 "samples_num{0}".format(samples_num)]["quantile{0}".format(quantile)]= {}
 
-                            result_df, result_dict = func.build_samples_continues(key=key,
-                                                                                  sample_begin=start_samp,
-                                                                                  sample_end=samples_num,
-                                                                                  sample_len=sample_len,
-                                                                                  window_size=window_size,
-                                                                                  flip_probability=flip_probability,
-                                                                                  delete_probability=delete_probability,
-                                                                                  insert_probability=insert_probability,
-                                                                                  result_dict=result_dict)
-                            start_samp = samples_num
+
                             common_samples_df = func.prune_samples_extended(result_df=result_df,
                                                                             min_count=-1,
                                                                             quantile=quantile)

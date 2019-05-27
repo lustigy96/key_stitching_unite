@@ -124,6 +124,12 @@ if __name__ == "__main__":
                             "window_size{0}".format(window_size)]["error{0}".format(error)][
                             "samples_num{0}".format(samples_num)] = {}
 
+                        result_df, result_dict = func.build_samples_from_file(p_list=p_list,
+                                                                              window_size=window_size,
+                                                                              sample_start=start_samp,
+                                                                              sample_end=samples_num,
+                                                                              result_dict=result_dict)
+                        start_samp = samples_num
 
                         for quantile in quantile_vec:
                             QUANTILE_NUM_PATH = "/quantile{0}".format(quantile)
@@ -137,12 +143,7 @@ if __name__ == "__main__":
                                 "error{0}".format(error)][
                                 "samples_num{0}".format(samples_num)]["quantile{0}".format(quantile)] = {}
 
-                            result_df, result_dict = func.build_samples_from_file(p_list=p_list,
-                                                                                  window_size=window_size,
-                                                                                  sample_start=start_samp,
-                                                                                  sample_end=samples_num,
-                                                                                  result_dict=result_dict)
-                            start_samp = samples_num
+
                             common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
 
 
