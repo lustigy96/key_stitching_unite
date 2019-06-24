@@ -11,7 +11,7 @@ import operator as op
 from functools import reduce
 from bitstring import BitArray
 import sys
-
+import numpy
 
 hex2bin_map = {
     "0": "0000",
@@ -291,7 +291,8 @@ def build_samples(key, num_samples, sample_len, window_size, flip_probability, d
     result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
     print 'DONE!'
     return result_df
-def build_samples_from_file(p_list,window_size,sample_start, sample_end, result_dict):
+
+def build_samples_from_file(p_list, window_size, sample_start, sample_end, result_dict):
     count_lines=-1
     stop=False
     print("build samples from file...")
@@ -305,9 +306,10 @@ def build_samples_from_file(p_list,window_size,sample_start, sample_end, result_
                     break
                 if count_lines<sample_start: continue
                 if count_lines%10000==0: print count_lines
-                sample =  s=np.array(" ".join(line).split(" ")[:-1]).astype(int)
+
+                sample = s =np.array(" ".join(line).split(" ")[:-1]).astype(int)
                 for window_start in range(len(sample) - window_size + 1):
-                    window = sample[window_start:window_start + window_size]
+                    window = sample[window_start : window_start + window_size]
                     window_key = ''.join(window.astype(str))
                     if window_key not in result_dict: # change to sub-string
                         result_dict[window_key] = {'sample': window_key,
@@ -322,9 +324,14 @@ def build_samples_from_file(p_list,window_size,sample_start, sample_end, result_
                         #if sample_start + window_start not in result_dict[window_key]['similar_samples']:
                         #    result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
                         #        sample_start + window_start]
-    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+    result_df = None
+    if result_dict:
+        result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+
     print 'DONE!'
     return result_df, result_dict
+
+
 def prune_samples(result_df, min_count=-1, quantile=0.5):
     '''
     returns a subset of the snippets dataset which consists only of snippets that show high statistical significance
@@ -741,6 +748,51 @@ def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_poin
                     break
                 else:
                     path.append(all2PowerWindowArray_idx[curr_sample_number])
+
+        retrieved_key += [curr_key]
+    print "done stitch_boris_noDict"
+    return retrieved_key
+def stitch_boris_noDict_sorted(common_samples_df,  all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift, allowCycle=False, key_length=None):
+    print 'stitch_boris_noDict...'
+    common_samples_array = np.array(common_samples_df['sample'])
+
+    # start_samples = []
+    # for sample in common_samples_array:
+    #     if sample not in shift_pointers['right_index']:
+    #         start_samples += [sample]
+    #those which are not the "right" of any sample (they are the most left!)
+    start_samples_number_array = np.where(shift_pointers_right_index==1)[0]
+
+    retrieved_key = []
+    i=0
+    for start_sample_number in start_samples_number_array:
+        i+=1
+        if i % 10000 == 0:
+            print "i = {0}".format(i)
+            print 'START SAMPLE NUMBER: ' + str(start_sample_number)
+        start_sample = common_samples_array[all2PowerWindowArray_idx[start_sample_number]]
+        curr_sample = start_sample
+        curr_sample_number = start_sample_number
+
+        path = numpy.array([all2PowerWindowArray_idx[curr_sample_number]])
+        curr_key = curr_sample
+        while shift_pointers_left_index[curr_sample_number] == 2:
+            curr_sample_right_neighbor_number = shift_pointers_left_index_right[curr_sample_number]
+            curr_sample_right_neighbor = common_samples_array[all2PowerWindowArray_idx[curr_sample_right_neighbor_number]]
+            shift = shift_pointers_left_index_shift[curr_sample_number]
+            curr_key += curr_sample_right_neighbor[(-1)*shift:]
+            curr_sample = curr_sample_right_neighbor
+            curr_sample_number = curr_sample_right_neighbor_number
+            if not allowCycle:
+                p = all2PowerWindowArray_idx[curr_sample_number]
+                index = numpy.searchsorted(path, p)
+                try:
+                    if path[index] == p:
+                        break
+                    else:
+                        path = numpy.insert(path, index, p)
+                except:
+                    path = numpy.insert(path, index, p)
 
         retrieved_key += [curr_key]
     print "done stitch_boris_noDict"

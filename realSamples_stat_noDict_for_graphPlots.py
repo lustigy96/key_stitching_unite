@@ -21,7 +21,7 @@ if __name__ == "__main__":
     except:
         pass
 
-    print "\n\n~~Start Gabi Algorithem ...~~\n\n"
+    print "\n\n~~Start SFS Algorithem ...~~\n\n"
 
     hex_key_512 = "023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd"
     hex_key_1024 = "023456789abcdef1dcba987654321112233445566778899aabbccddeef1eeddccbbaa99887766554433221100111222333444555666777888999aaabbbcccddd101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f"
@@ -33,9 +33,9 @@ if __name__ == "__main__":
     key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key4096 = ''.join(func.hex2bin_map[i] for i in hex_key_4096)
 
-    key = key512
+    key = key2048
 
-    path = "./new_512_probe230/good_decoded_samples.txt"
+    path = "./new_1024_probe180/good_decoded_samples.txt"
 
     p_list = [path]
 
@@ -47,22 +47,22 @@ if __name__ == "__main__":
     window_size = None
     quantile = 0.95
 
-    GRAPHS = "WINDOES"  # QUANTILE
-    X = "samplesNumVec"
-    f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}.txt".format(
-        key_length, GRAPHS, X, window_size, quantile)
-    f_data = open(f_data_path, "a+")
-    f_data.write(' '.join(map(str, window_size_vec)))  # f_data.write(' '.join(map(str,quantile_vec)))
-    f_data.write('\n')
-    f_data.write(' '.join(map(str, samples_num_vec)))
-    f_data.write('\n')
-    f_data.close()
+    #GRAPHS = "WINDOES"  # QUANTILE
+    #X = "samplesNumVec"
+    #f_data_path = "./results/realChannel/dataForGraph_Key={0}_Graphs={1}_x={2}_windowSize={3}_quantile={4}.txt".format(
+    #    key_length, GRAPHS, X, window_size, quantile)
+    #f_data = open(f_data_path, "a+")
+    #f_data.write(' '.join(map(str, window_size_vec)))  # f_data.write(' '.join(map(str,quantile_vec)))
+    #f_data.write('\n')
+    #f_data.write(' '.join(map(str, samples_num_vec)))
+    #f_data.write('\n')
+    #f_data.close()
     i = 1
     for window_size in window_size_vec:
         start_samp = 0
         result_dict = {}
         for samples_num in samples_num_vec:
-            f_data = open(f_data_path, "a+")
+            #f_data = open(f_data_path, "a+")
             summryMy = open(
                 "./results/realChannel/summryMy_keyLength={0}_windowSize={1}_quantile={2}_withOpposite={3}_start_samp={4}_sample_end={5}.txt".format(
                     key_length, window_size, quantile, opposite, start_samp, start_samp + samples_num), "a+")
@@ -159,10 +159,10 @@ if __name__ == "__main__":
             retrievedKeyOppositeFile.close()
 
             dist = conclusion  # func.levenshtein_edit_dist(candidate_key,key, False)[0]
-            f_data.write(
-                str(dist['DIST']) + " " + str(dist['I']) + " " + str(dist['D']) + " " + str(dist['F']) + " " + str(
-                    len(candidate_key_regular)) + "\n")
-            f_data.close()
+          #  f_data.write(
+            #    str(dist['DIST']) + " " + str(dist['I']) + " " + str(dist['D']) + " " + str(dist['F']) + " " + str(
+            #        len(candidate_key_regular)) + "\n")
+           # f_data.close()
             i += 1
             start_samp = samples_num
 
