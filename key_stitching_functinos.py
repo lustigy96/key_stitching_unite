@@ -307,7 +307,10 @@ def build_samples_from_file(p_list, window_size, sample_start, sample_end, resul
                 if count_lines<sample_start: continue
                 if count_lines%10000==0: print count_lines
 
-                sample = s =np.array(" ".join(line).split(" ")[:-1]).astype(int)
+                line.replace("\r", "").replace("\n", "")
+
+                sample = np.array(" ".join(line).split(" ")).astype(int)
+
                 for window_start in range(len(sample) - window_size + 1):
                     window = sample[window_start : window_start + window_size]
                     window_key = ''.join(window.astype(str))

@@ -7,31 +7,33 @@ import os
 
 def Probe(probe_len, codeName):
     paths = {
-            "Haswell":
-                     {
-                         180:["./samples/Haswell/probe180/good_decoded_samples_1.txt",
-                              "./samples/Haswell/probe180/good_decoded_samples_2.txt",
-                              "./samples/Haswell/probe180/good_decoded_samples_3.txt"],
-                         230: ["./samples/Haswell/probe230/good_decoded_samples_1.txt",
-                               "./samples/Haswell/probe230/good_decoded_samples_2.txt",
-                               "./samples/Haswell/probe230/good_decoded_samples_3.txt"],
-                         300: ["./samples/Haswell/probe230/good_decoded_samples_1.txt",
-                               "./samples/Haswell/probe230/good_decoded_samples_2.txt",
-                               "./samples/Haswell/probe230/good_decoded_samples_3.txt"],
-                      },
-            "CoffeeLake":
-                    {
-                        180: ["./samples/CoffeeLake/probe180/good_decoded_samples_1.txt",
-                              "./samples/CoffeeLake/probe180/good_decoded_samples_2.txt",
-                              "./samples/CoffeeLake/probe180/good_decoded_samples_3.txt"],
-                        230: ["./samples/CoffeeLake/probe230/good_decoded_samples_1.txt",
-                              "./samples/CoffeeLake/probe230/good_decoded_samples_2.txt",
-                              "./samples/CoffeeLake/probe230/good_decoded_samples_3.txt"],
-                        300: ["./samples/CoffeeLake/probe230/good_decoded_samples_1.txt",
-                              "./samples/CoffeeLake/probe230/good_decoded_samples_2.txt",
-                              "./samples/CoffeeLake/probe230/good_decoded_samples_3.txt"],
-                    }
-            }
+        "Haswell":
+            {
+                180: ["./samples/Haswell/probe180/good_decoded_samples_v0.txt",
+                      "./samples/Haswell/probe180/good_decoded_samples_v1.txt",
+                      "./samples/Haswell/probe180/good_decoded_samples_v2.txt",
+                      "./samples/Haswell/probe180/good_decoded_samples_v3.txt"],
+                230: ["./samples/Haswell/probe230/good_decoded_samples_v0.txt",
+                      "./samples/Haswell/probe230/good_decoded_samples_v1.txt",
+                      "./samples/Haswell/probe230/good_decoded_samples_v2.txt",
+                      "./samples/Haswell/probe230/good_decoded_samples_v3.txt",
+                      "./samples/Haswell/probe230/good_decoded_samples_v4.txt"],
+                300: ["./samples/Haswell/probe230/good_decoded_samples_v0.txt",
+                      "./samples/Haswell/probe230/good_decoded_samples_v1.txt"],
+            },
+        "CoffeeLake":
+            {
+                180: ["./samples/CoffeLake/probe180/good_decoded_samples_v0.txt"],
+                230: ["./samples/CoffeeLake/probe230/good_decoded_samples_v0.txt"],
+                300: [],
+            },
+        "SkyLake":
+            {
+                180: [],
+                230: ["./samples/SkyLake/probe230/good_decoded_samples_v0.txt"],
+                300: [],
+            },
+    }
     return paths[codeName][probe_len]
 
 
@@ -70,20 +72,12 @@ def notOpposite(common_samples_df, stitch_shift_size, window_size):
     return retrieved_key
 
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
-
 
     DIR_RESULT_PATH = "./results"
     DIR_PATH_REALCHANNEL = "/realChannel"
     PRINT_RETRIVED_KESYS = True
-
+    SIZE_OF_RETRIVED_KESYS_TO_PRINT = 0.7
 
     try:
         os.mkdir(DIR_RESULT_PATH)
@@ -107,34 +101,28 @@ if __name__ == "__main__":
     key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key4096 = ''.join(func.hex2bin_map[i] for i in hex_key_4096)
 
-
-
-    key_length_vec = [len(key2048)] #[len(key512), len(key1024), len(key2048),len(key4096)]
-    key_vec = [key2048] #[key512, key1024, key2048, key4096]
-    probe_len_vec = [180, 230, 300]
+    key_length_vec = [len(key2048)]  # [len(key512), len(key1024), len(key2048),len(key4096)]
+    key_vec = [key2048]  # [key512, key1024, key2048, key4096]
+    probe_len_vec = [180]  # [180, 230, 300]
     window_size_vec = [30]
+    # start_sample_vec = [0, 700000, 1400000]
     samples_num_vec = [100000, 200000, 500000, 700000]
-    quantile_vec=[0.7, 0.8, 0.9, 0.95, 0.98] #each has
-    method_vec = ["notOpposite","Opposite"]
-    cpu_name = ["SandyBrige", "Haswell", "CoffeeLake"]
+    quantile_vec = [0.6, 0.9, 0.95]  # each has
+    method_vec = ["notOpposite", "Opposite"]
+    cpuName = ["CoffeeLake"]#["Haswell"]  # ["SandyBrige", "Haswell", "CoffeeLake","SkyLake"]
     stitch_shift_size = 1
     error_vec = ["REAL"]
 
-
-
     tableResult = {}
 
-
-    i=0
-    for codeName in cpu_name:
-        CODE_NAME_PATH = "/cpu_name{0}".format(codeName)
+    i = 0
+    for codeName in cpuName:
+        CODE_NAME_PATH = "/cpuName_{0}".format(codeName)
         try:
             os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH)
         except:
             pass
-        tableResult["cpu_name{0}".format(codeName)] = {}
-
-
+        tableResult["cpuName_{0}".format(codeName)] = {}
 
         for idxK, key_length in enumerate(key_length_vec):
             key = key_vec[idxK]
@@ -143,37 +131,41 @@ if __name__ == "__main__":
                 os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH)
             except:
                 pass
-            tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)] = {}
+            tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)] = {}
 
             for probe_len in probe_len_vec:
                 p_list = Probe(probe_len=probe_len, codeName=codeName)
 
                 SAMPLE_LEN_PATH = "/probe_len{0}".format(probe_len)
 
-
                 try:
-                    os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH)
+                    os.mkdir(
+                        DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH)
                 except:
                     pass
-                tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)] = {}
+                tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                    "probe_len{0}".format(probe_len)] = {}
 
                 for window_size in window_size_vec:
                     WINDOWS_SIZE_PATH = "/window_size{0}".format(window_size)
                     try:
-                        os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH)
+                        os.mkdir(
+                            DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH)
                     except:
                         pass
-                    tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)]["window_size{0}".format(window_size)] = {}
+                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                        "probe_len{0}".format(probe_len)]["window_size{0}".format(window_size)] = {}
 
                     for error in error_vec:
                         ERROR_PATH = "/error{0}".format(error)
                         try:
-                            os.mkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH)
+                            os.mkdir(
+                                DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH)
                         except:
                             pass
-                        tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
+                        tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                            "probe_len{0}".format(probe_len)][
                             "window_size{0}".format(window_size)]["error{0}".format(error)] = {}
-
 
                         start_samp = 0
                         result_dict = {}
@@ -185,7 +177,8 @@ if __name__ == "__main__":
                                     DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH)
                             except:
                                 pass
-                            tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
+                            tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                                "probe_len{0}".format(probe_len)][
                                 "window_size{0}".format(window_size)]["error{0}".format(error)][
                                 "samples_num{0}".format(samples_num)] = {}
 
@@ -203,15 +196,14 @@ if __name__ == "__main__":
                                         DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH)
                                 except:
                                     pass
-                                tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
+                                tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                                    "probe_len{0}".format(probe_len)][
                                     "window_size{0}".format(window_size)][
                                     "error{0}".format(error)][
                                     "samples_num{0}".format(samples_num)]["quantile{0}".format(quantile)] = {}
 
-
-                                common_samples_df = func.prune_samples_extended(result_df, min_count=-1, quantile=quantile)
-
-
+                                common_samples_df = func.prune_samples_extended(result_df, min_count=-1,
+                                                                                quantile=quantile)
 
                                 for method in method_vec:
                                     METHOD_PATH = "/{0}".format(method)
@@ -220,33 +212,35 @@ if __name__ == "__main__":
                                             DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH)
                                     except:
                                         pass
-                                    tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
+                                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                                        "probe_len{0}".format(probe_len)][
                                         "window_size{0}".format(window_size)]["error{0}".format(error)][
                                         "samples_num{0}".format(samples_num)][
                                         "quantile{0}".format(quantile)]["/{0}".format(method)] = {}
 
-
                                     if method == "notOpposite":
+
                                         retrieved_key = notOpposite(common_samples_df, stitch_shift_size, window_size)
                                     elif method == "Opposite":
                                         retrieved_key = opposite(common_samples_df, stitch_shift_size, window_size)
 
                                     candidate_key = max(retrieved_key, key=len)
 
-                                    if PRINT_RETRIVED_KESYS:
-                                        for cankey in retrieved_key:
-                                            if len(cankey) > 0.9 * len(key):
-                                                retrievedKeysFile.write(cankey)
-                                                retrievedKeysFile.write("\n")
-                                        retrievedKeysFile.close()
-
                                     summryMy = open(
                                         DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/summryMy.txt",
                                         "w")
-                                    retrievedKeysFile = open(
-                                        DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/retrievedKeys.txt",
-                                        "w")
 
+                                    if PRINT_RETRIVED_KESYS:
+                                        retrievedKeysFile = open(
+                                            DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH + ERROR_PATH + SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/retrievedKeys.txt",
+                                            "w")
+
+                                        for cankey in retrieved_key:
+                                            if len(cankey) > SIZE_OF_RETRIVED_KESYS_TO_PRINT * len(key):
+                                                retrievedKeysFile.write(cankey)
+                                                retrievedKeysFile.write("\n")
+
+                                        retrievedKeysFile.close()
 
                                     ## print results conclusion to file
                                     string = "\nRESULT_NUMBER = {0}".format(i)
@@ -279,12 +273,15 @@ if __name__ == "__main__":
                                     summryMy.write(string)
                                     summryMy.close()
 
-                                    tableResult["cpu_name{0}".format(codeName)]["key_length{0}".format(key_length)]["probe_len{0}".format(probe_len)][
+                                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                                        "probe_len{0}".format(probe_len)][
                                         "window_size{0}".format(window_size)]["error{0}".format(error)][
                                         "samples_num{0}".format(samples_num)][
                                         "quantile{0}".format(quantile)]["{0}".format(method)] = dist
 
-                                    tableFile = open(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + "/real_table{0}.txt".format(key_length), "w")
+                                    tableFile = open(
+                                        DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + "/real_table{0}.txt".format(
+                                            key_length), "w")
                                     tableFile.write(str(tableResult))
                                     tableFile.close()
 
