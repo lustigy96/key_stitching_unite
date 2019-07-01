@@ -307,7 +307,7 @@ def build_samples_from_file(p_list, window_size, sample_start, sample_end, resul
                 if count_lines<sample_start: continue
                 if count_lines%10000==0: print count_lines
 
-                line.replace("\r", "").replace("\n", "")
+                line = line.replace("\r", "").replace("\n", "")
 
                 sample = np.array(" ".join(line).split(" ")).astype(int)
 
