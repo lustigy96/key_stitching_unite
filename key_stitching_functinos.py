@@ -521,7 +521,7 @@ def build_samples_continues(key, sample_begin, sample_end, sample_len, window_si
                 if sample_start + window_start not in result_dict[window_key]['similar_samples']:
                     result_dict[window_key]['similar_samples'] = result_dict[window_key]['similar_samples'] + [
                         sample_start + window_start]
-    result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index')
     print 'DONE!'
     return result_df, result_dict
 
