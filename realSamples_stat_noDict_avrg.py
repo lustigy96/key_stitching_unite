@@ -203,7 +203,7 @@ if __name__ == "__main__":
                                 result_df, result_dict = func.build_samples_from_file(p_list=p_list,
                                                                                       window_size=window_size,
                                                                                       sample_start=start_samp,
-                                                                                      sample_end=samples_num,
+                                                                                      sample_end=samples_num+start_samp,
                                                                                       result_dict=result_dict)
 
                                 for quantile in quantile_vec:
