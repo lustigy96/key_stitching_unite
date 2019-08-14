@@ -9,55 +9,22 @@ import plotly.offline as ply
 import pickle
 
 
-def Probe(probe_len, codeName):
-    paths = {
-        "SandyBrige":
-            {
-                180: [],
-                230: ["./samples/SandyBrige/new_2048_probe230/good_decoded_samples.txt"],
-                300: [],
-            },
-        "Haswell":
-            {
-                180: ["./samples/Haswell/key1/probe180/good_decoded_samples.txt"],
-                200: ["./samples/Haswell/key1/probe230/good_decoded_samples.txt"],
-		        230: ["./samples/Haswell/key1/probe230_stress/good_decoded_samples.txt"],
-                300: ["./samples/Haswell/key1/probe300/good_decoded_samples.txt"],
-            },
-        "CoffeeLake":
-            {
-                180: [],
-                230: ["./samples/CoffeeLake/stress/good_decoded_samples_idle256.txt"],
-                300: [],
-            },
-        "SkyLake":
-            {
-                180: [],
-                230: ["./samples/Skylake/key1/good_decoded_samples_v1.txt"],
-                300: [],
-            },
-    }
-    return paths[codeName][probe_len]
-
-
-
-
-p_list = Probe(200, "Haswell")
 result_dict={}
 # result_df, result_dict = func.build_samples_from_file(p_list=p_list,window_size=30, sample_start=0, sample_end=100000,result_dict=result_dict)
-key = func.init_key(1024, -1)
+key = func.init_key(512, -1)
 
 result_df, result_dict = func.build_samples_continues(key=key,
                                                       sample_begin=0,
-                                                      sample_end=3000,
-                                                      sample_len=40,
+                                                      sample_end=500000,
+                                                      sample_len=45,
                                                       window_size=30,
-                                                      flip_probability=0.01,
-                                                      delete_probability=0.01,
-                                                      insert_probability=0.01,
+                                                      flip_probability=0.05,
+                                                      delete_probability=0.05,
+                                                      insert_probability=0.05,
                                                       result_dict=result_dict)
 
 result_df=result_df.sort_values('count', ascending=False)
+result_df= result_df[result_df['count']>1]
 '''
 trace = go.Bar(
     #x=result_df['sample'],
@@ -68,8 +35,8 @@ trace = go.Bar(
 # Create information / layout dictionary
 layout = dict(
     title="filter",
-
-
+    hover_data=['lifeExp', 'gdpPercap'],
+    color='lifeExp',
     xaxis={'title': 'samples'},
     yaxis={'title': 'count',
            'range': [0, 2]}
@@ -77,15 +44,14 @@ layout = dict(
 # Pack the data
 data = [trace]
 # Create a figure
-fig = dict(data=data, layout=layout)
+# fig = dict(data=data, layout=layout)
 # Plot
-ply.plot(fig, filename='./filterGraph.html')
-# ply.plot(data, filename='./filterGraph.html')
 
-'''
-# import plotly.express as px
-# fig = px.bar(result_df,  y='count')
+import plotly.express as px
+fig = px.bar(result_df,  y='count', color='count')
+ply.plot(fig, filename='./filterGraph.html')
 # fig.show()
+'''
 
 result_df.plot.bar(y='count', rot=0)
 matplotlib.pyplot.show()
