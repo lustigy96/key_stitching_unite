@@ -101,7 +101,7 @@ if __name__ == "__main__":
     key_vec = [key2048]  # [key512, key1024, key2048, key4096]
     probe_len_vec = [200,230,300,400,550,700]  # [180, 230, 300]
     window_size_vec = [15,20,25,30]
-    samples_num_vec = [200, 500, 700]
+    samples_num_vec = [200000, 500000, 800000]
     quantile_vec = [0.9]  # each has
     method_vec = ["notOpposite", "Opposite"]
     cpuName = ["CoffeeLake"]#["Haswell"]  # ["SandyBrige", "Haswell", "CoffeeLake","SkyLake"]
@@ -151,9 +151,9 @@ if __name__ == "__main__":
                             WINDOWS_SIZE_PATH)
                     except:
                         pass
-                        tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
-                            "quantile{0}".format(quantile)][
-                        "window_size{0}".format(window_size)] = {}
+                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                        "quantile{0}".format(quantile)][
+                    "window_size{0}".format(window_size)] = {}
 
                     c=0
                     for samples_num in samples_num_vec:
@@ -164,9 +164,10 @@ if __name__ == "__main__":
                                 WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH)
                         except:
                             pass
+
                         tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
                             "quantile{0}".format(quantile)][
-                            "window_size{0}".format(window_size)][
+                        "window_size{0}".format(window_size)][
                             "samples_num{0}".format(samples_num)] = {}
 
 
@@ -280,13 +281,15 @@ if __name__ == "__main__":
 
                                 ok = False
                                 dist['DIST - INSERTIONS'] = -1
+                                dist['SUCCSESS'] = "BAD"
                                 if dist['DIST'] <25:
                                     if dist['DIST']-dist['I']>10 and candidate_key[:5]=="00000":
                                         string = string + "\nDIST-INSERTION = " + str(dist['DIST']-dist['I'])
                                         ok = True
                                         dist['DIST - INSERTIONS'] = dist['DIST'] - dist['I']
-
+                                        dist['SUCCSESS'] = "GOOD"
                                     elif dist['DIST']-dist['I']<=10:
+                                        dist['SUCCSESS'] = "GOOD"
                                         ok = True
 
 
