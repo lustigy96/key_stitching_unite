@@ -98,10 +98,10 @@ def PrintToSummryFile(file, key, key_length, candidate_key, samples_num, result_
              "\n"
     file.write(string)
 
-    string = "\nDIST = " + str(dist['DIST']) + \
-             "\nI = " + str(dist['I']) + \
-             "\nD = " + str(dist['D']) + \
-             "\nF = " + str(dist['F'])
+    string = "\nDIST = " + str(conclusion['DIST']) + \
+             "\nI = " + str(conclusion['I']) + \
+             "\nD = " + str(conclusion['D']) + \
+             "\nF = " + str(conclusion['F'])
     file.write(string)
     return conclusion
 
