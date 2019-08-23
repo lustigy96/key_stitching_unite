@@ -74,6 +74,56 @@ def notOpposite(common_samples_df, stitch_shift_size, window_size):
     return retrieved_key
 
 
+
+def TryMkdir(path):
+    try:
+        os.mkdir(path)
+    except:
+        pass
+    return path
+
+
+
+def PrintToSummryFile(summryMy, key, key_length, candidate_key, samples_num, result_df, quantile, common_samples_df, stitch_shift_size, window_size):
+    string = "\nRESULT_NUMBER = {0}".format(i)
+    summryMy.write(string)
+    string = "\noriginal key(len={0}):\n".format(key_length) + key
+    summryMy.write(string)
+    string = "\ncandidate_key(len={0}):\n".format(len(candidate_key)) + candidate_key
+    summryMy.write(string)
+    string = "\nkey.find(candidate_key) = " + str(key.find(candidate_key))
+    summryMy.write(string)
+
+    conclusion, s1_match_indices = func.levenshtein_edit_dist(key, candidate_key)
+
+    string = "\nlevenshtein_edit_dist(key, candidate_key) = \n" + str(
+        (conclusion, s1_match_indices))
+    summryMy.write(string)
+    string = "\nSIMULATION = " + str(SIMULATION)
+    summryMy.write(string)
+    string = "\nsamples_num = " + str(samples_num) + \
+             "\nsample_len = " + str(sample_len) + \
+             "\nflip_probability = " + str(error_dict["flip"]) + \
+             "\ninsert_probability = " + str(error_dict["insert"]) + \
+             "\ndelete_probability = " + str(error_dict["del"]) + \
+             "\nresult_df = " + str(len(result_df)) + \
+             "\ncommon_samples_df quantile = " + str(quantile) + \
+             "\ncommon_samples_df = " + str(len(common_samples_df)) + \
+             "\nstitch_shift_size = " + str(stitch_shift_size) + \
+             "\nwindow_size = " + str(window_size) + \
+             "\n"
+    summryMy.write(string)
+
+    dist = conclusion  # func.levenshtein_edit_dist(candidate_key,key, False)[0]
+    string = "\nDIST = " + str(dist['DIST']) + \
+             "\nI = " + str(dist['I']) + \
+             "\nD = " + str(dist['D']) + \
+             "\nF = " + str(dist['F']) + \
+             "\n"
+    summryMy.write(string)
+    return dist
+
+
 if __name__ == "__main__":
 
     SIMULATION = True
@@ -81,14 +131,8 @@ if __name__ == "__main__":
     DIR_RESULT_PATH = "./results"
     DIR_PATH_SIMULATION = "/simulation"
 
-    try:
-        os.mkdir(DIR_RESULT_PATH)
-    except:
-        pass
-    try:
-        os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION)
-    except:
-        pass
+    TryMkdir(DIR_RESULT_PATH)
+    TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION)
 
     key_length_vec = [2048]
     sample_len_vec = [40]
@@ -108,27 +152,17 @@ if __name__ == "__main__":
         key = func.init_key(key_length, -1)
         KEY_LENGTH_PATH = "/key_length{0}".format(key_length)
 
-        try:
-            os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH)
-        except:
-            pass
+        TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH)
         tableResult["key_length{0}".format(key_length)] = {}
 
         for quantile in quantile_vec:
             QUANTILE_NUM_PATH = "/quantile{0}".format(quantile)
-            try:
-                os.mkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH)
-            except:
-                pass
+            TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH)
             tableResult["key_length{0}".format(key_length)]["quantile{0}".format(quantile)] = {}
             for sample_len in sample_len_vec:
                 SAMPLE_LEN_PATH = "/sample_len{0}".format(sample_len)
 
-                try:
-                    os.mkdir(
-                        DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH)
-                except:
-                    pass
+                TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH)
                 tableResult["key_length{0}".format(key_length)]["quantile{0}".format(quantile)][
                     "sample_len{0}".format(sample_len)] = {}
 
@@ -139,28 +173,19 @@ if __name__ == "__main__":
                     error_dict = Error(error)
                     ERROR_PATH = "/error{0}".format(error)
 
-                    try:
-                        os.mkdir(
-                            DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH)
-                    except:
-                        pass
+                    TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH)
                     tableResult["key_length{0}".format(key_length)]["quantile{0}".format(quantile)][
                         "sample_len{0}".format(sample_len)]["error{0}".format(error)] = {}
 
 
                     workbook = xlsxwriter.Workbook(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + '/simulation_table{0}.xlsx'.format(key_length_vec[0]))
-
                     worksheet = workbook.add_worksheet()
 
                     row = -2
                     for window_size in window_size_vec:
                         row += 2
                         WINDOWS_SIZE_PATH = "/window_size{0}".format(window_size)
-                        try:
-                            os.mkdir(
-                                DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH)
-                        except:
-                            pass
+                        TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH)
                         tableResult["key_length{0}".format(key_length)]["quantile{0}".format(quantile)]["sample_len{0}".format(sample_len)][
                             "error{0}".format(error)]["window_size{0}".format(window_size)] = {}
 
@@ -171,11 +196,7 @@ if __name__ == "__main__":
                         col=0
                         for samples_num in samples_num_vec:
                             SAMPLE_NUM_PATH = "/samples_num{0}".format(samples_num)
-                            try:
-                                os.mkdir(
-                                    DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH)
-                            except:
-                                pass
+                            TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH)
                             tableResult["key_length{0}".format(key_length)]["quantile{0}".format(quantile)][
                                 "sample_len{0}".format(sample_len)]["error{0}".format(error)][
                                 "window_size{0}".format(window_size)]["samples_num{0}".format(samples_num)] = {}
@@ -197,14 +218,9 @@ if __name__ == "__main__":
 
                             for method in method_vec:
                                 METHOD_PATH = "/{0}".format(method)
-                                try:
-                                    os.mkdir(
-                                        DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH + METHOD_PATH)
-                                except:
-                                    pass
+                                path = TryMkdir(DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH + METHOD_PATH)
 
                                 if method == "notOpposite":
-
                                     retrieved_key = notOpposite(common_samples_df, stitch_shift_size,
                                                                 window_size)
                                 elif method == "Opposite":
@@ -212,51 +228,14 @@ if __name__ == "__main__":
 
                                 candidate_key = max(retrieved_key, key=len)
 
-                                summryMy = open(
-                                    DIR_RESULT_PATH + DIR_PATH_SIMULATION + KEY_LENGTH_PATH + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH + SAMPLE_NUM_PATH + METHOD_PATH + "/summryMy.txt",
-                                    "w")
+                                summryMy = open(path + "/summryMy.txt","w")
 
                                 ## print results conclusion to file
-                                string = "\nRESULT_NUMBER = {0}".format(i)
-                                summryMy.write(string)
-                                string = "\noriginal key(len={0}):\n".format(key_length) + key
-                                summryMy.write(string)
-                                string = "\ncandidate_key(len={0}):\n".format(len(candidate_key)) + candidate_key
-                                summryMy.write(string)
-                                string = "\nkey.find(candidate_key) = " + str(key.find(candidate_key))
-                                summryMy.write(string)
-
-                                conclusion, s1_match_indices = func.levenshtein_edit_dist(key, candidate_key)
-
-                                string = "\nlevenshtein_edit_dist(key, candidate_key) = \n" + str(
-                                    (conclusion, s1_match_indices))
-                                summryMy.write(string)
-                                string = "\nSIMULATION = " + str(SIMULATION)
-                                summryMy.write(string)
-                                string = "\nsamples_num = " + str(samples_num) + \
-                                         "\nsample_len = " + str(sample_len) + \
-                                         "\nflip_probability = " + str(error_dict["flip"]) + \
-                                         "\ninsert_probability = " + str(error_dict["insert"]) + \
-                                         "\ndelete_probability = " + str(error_dict["del"]) + \
-                                         "\nresult_df = " + str(len(result_df)) + \
-                                         "\ncommon_samples_df quantile = " + str(quantile) + \
-                                         "\ncommon_samples_df = " + str(len(common_samples_df)) + \
-                                         "\nstitch_shift_size = " + str(stitch_shift_size) + \
-                                         "\nwindow_size = " + str(window_size) + \
-                                         "\n"
-                                summryMy.write(string)
-
-                                dist = conclusion  # func.levenshtein_edit_dist(candidate_key,key, False)[0]
-                                string = "\nDIST = " + str(dist['DIST']) + \
-                                         "\nI = " + str(dist['I']) + \
-                                         "\nD = " + str(dist['D']) + \
-                                         "\nF = " + str(dist['F']) + \
-                                         "\n"
-                                summryMy.write(string)
-                                summryMy.close()
+                                dist = PrintToSummryFile(summryMy, key, key_length, candidate_key, samples_num,
+                                                         result_df, quantile, common_samples_df, stitch_shift_size,
+                                                         window_size)
 
                                 worksheet.write(row, col, int(dist['DIST']))
-
                                 worksheet.write(row+1, col, str(dist))
 
 
@@ -269,6 +248,8 @@ if __name__ == "__main__":
                                     DIR_RESULT_PATH + DIR_PATH_SIMULATION + "/simulation_table{0}.txt".format(key_length),
                                     "w")
                                 tableFile.write(str(tableResult))
+
+                                summryMy.close()
                                 tableFile.close()
                                 col+=1
                     workbook.close()

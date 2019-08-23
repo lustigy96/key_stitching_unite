@@ -15,7 +15,7 @@ import operator as op
 from functools import reduce
 from bitstring import BitArray
 import sys
-import key_stitching_functinos as func
+import key_stitching_unite.key_stitching_functinos as func
 
 
 

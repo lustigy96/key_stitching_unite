@@ -2,7 +2,7 @@
 #
 import numpy as np
 import pandas as pd
-import key_stitching_functinos as func
+import key_stitching_unite.key_stitching_functinos as func
 import os
 
 
