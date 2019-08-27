@@ -316,12 +316,7 @@ def build_samples_from_file(p_list, window_size, sample_start, sample_end, resul
                     window_key = ''.join(window.astype(str))
                     if window_key not in result_dict: # change to sub-string
                         result_dict[window_key] = {'sample': window_key,
-                                                    'count': 1,
-                                                    'weight': sum(window),
-                                                    'similar_count': 0,
-                                                    #'sample_start': [sample_start + window_start],
-                                                    #'similar_samples': [],
-                                                    'closest_majority_sample': ''}
+                                                    'count': 1}
                     else:
                         result_dict[window_key]['count'] += 1
                         #if sample_start + window_start not in result_dict[window_key]['similar_samples']:
@@ -329,7 +324,7 @@ def build_samples_from_file(p_list, window_size, sample_start, sample_end, resul
                         #        sample_start + window_start]
     result_df = None
     if result_dict:
-        result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='weight')
+        result_df = pd.DataFrame.from_dict(result_dict, orient='index').sort_values(by='count', ascending=False)
 
     print 'DONE!'
     return result_df, result_dict

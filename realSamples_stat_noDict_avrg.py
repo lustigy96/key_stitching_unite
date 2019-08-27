@@ -73,6 +73,7 @@ def TryMkdir(path):
         os.mkdir(path)
     except:
         pass
+    return path
 
 
 
@@ -148,7 +149,6 @@ if __name__ == "__main__":
     method_vec = ["notOpposite", "Opposite"]
     cpuName = ["CoffeeLake"]  # ["Haswell"]  # ["SandyBrige", "Haswell", "CoffeeLake","SkyLake"]
     stitch_shift_size = 1
-    error_vec = ["REAL"]
 
     tableResult = {}
 
@@ -164,6 +164,7 @@ if __name__ == "__main__":
             TryMkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH)
             tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)] = {}
 
+            c=1
             for probe_len in probe_len_vec:
                 p_list = Probe(probe_len=probe_len, codeName=codeName)
 
@@ -176,16 +177,11 @@ if __name__ == "__main__":
                 for window_size in window_size_vec:
                     WINDOWS_SIZE_PATH = "/window_size{0}".format(window_size)
                     TryMkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH)
-                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
-                        "probe_len{0}".format(probe_len)]["window_size{0}".format(window_size)] = {}
-
-
-                    tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
+                    tableResult["cpuName_{0}".format(codeName)][
+                            "key_length{0}".format(key_length)][
                             "probe_len{0}".format(probe_len)][
                             "window_size{0}".format(window_size)]= {}
 
-                        # start_samp = 0
-                        # result_dict_Total = {}
 
                     for samples_num in samples_num_vec:
                         SAMPLE_NUM_PATH = "/samples_num{0}".format(samples_num)
@@ -227,7 +223,7 @@ if __name__ == "__main__":
 
                                     for method in method_vec:
                                         METHOD_PATH = "/{0}".format(method)
-                                        TryMkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH +  SAMPLE_NUM_PATH + START_SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH)
+                                        path = TryMkdir(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH +  SAMPLE_NUM_PATH + START_SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH)
                                         tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
                                             "probe_len{0}".format(probe_len)][
                                             "window_size{0}".format(window_size)][
@@ -242,14 +238,10 @@ if __name__ == "__main__":
 
                                         candidate_key = max(retrieved_key, key=len)
 
-                                        summryMy = open(
-                                            DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH +  SAMPLE_NUM_PATH + START_SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/summryMy.txt",
-                                            "w")
+                                        summryMy = open(path + "/summryMy.txt", "w")
 
                                         if PRINT_RETRIVED_KESYS:
-                                            retrievedKeysFile = open(
-                                                DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + SAMPLE_LEN_PATH + WINDOWS_SIZE_PATH +  SAMPLE_NUM_PATH + START_SAMPLE_NUM_PATH + QUANTILE_NUM_PATH + METHOD_PATH + "/retrievedKeys.txt",
-                                                "w")
+                                            retrievedKeysFile = open(path + "/retrievedKeys.txt", "w")
 
                                             for cankey in retrieved_key:
                                                 if len(cankey) > SIZE_OF_RETRIVED_KESYS_TO_PRINT * len(key):
@@ -259,7 +251,7 @@ if __name__ == "__main__":
                                             retrievedKeysFile.close()
 
                                         ## print results conclusion to file
-                                        dist =PrintToSummryFile(file, key, key_length, candidate_key, samples_num, result_df, quantile, common_samples_df, stitch_shift_size, window_size)
+                                        dist = PrintToSummryFile(file, key, key_length, candidate_key, samples_num, result_df, quantile, common_samples_df, stitch_shift_size, window_size)
 
                                         tableResult["cpuName_{0}".format(codeName)]["key_length{0}".format(key_length)][
                                             "probe_len{0}".format(probe_len)][

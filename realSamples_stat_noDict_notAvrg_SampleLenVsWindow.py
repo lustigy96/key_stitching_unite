@@ -259,20 +259,18 @@ if __name__ == "__main__":
                                 dist = PrintToSummryFile(summryMy, key, key_length, candidate_key, samples_num, result_df, quantile, common_samples_df, stitch_shift_size, window_size)
 
                                 ok = False
-                                dist['DIST - INSERTIONS'] = -1
                                 dist['SUCCSESS'] = "BAD"
                                 if dist['DIST'] <25:
-                                    if dist['DIST']-dist['I']>10 and candidate_key[:5]=="00000":
-                                        string = "\nDIST-INSERTION = " + str(dist['DIST']-dist['I'])
-                                        summryMy.write(string)
+                                    if dist['DIST']-dist['I']<=10 and candidate_key[:5]=="00000":
                                         ok = True
-                                        dist['DIST - INSERTIONS'] = dist['DIST'] - dist['I']
                                         dist['SUCCSESS'] = "GOOD"
-                                    elif dist['DIST']-dist['I']<=10:
+                                    elif dist['DIST']<=10:
                                         dist['SUCCSESS'] = "GOOD"
                                         ok = True
 
-
+                                string = "\nDIST-INSERTION = " + str(dist['DIST']-dist['I'])
+                                summryMy.write(string)
+                                dist['DIST - INSERTIONS'] = dist['DIST'] - dist['I']
                                 worksheet.write(r, c, int(dist['DIST']))
                                 # worksheet.write(r+1, c, int(dist['DIST']-dist['I']))
                                 worksheet.write(r+1, c, str(dist))

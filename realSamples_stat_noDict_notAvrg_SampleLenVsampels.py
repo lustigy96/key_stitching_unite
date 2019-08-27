@@ -280,19 +280,17 @@ if __name__ == "__main__":
 
 
                             tmpOk = False
-                            dist['DIST - INSERTIONS'] = -1
                             if dist['DIST'] < 25:
-                                if dist['DIST'] - dist['I'] > 10 and candidate_key[:5] == "00000":
-                                    string = "\nDIST-INSERTION = " + str(dist['DIST'] - dist['I'])
-                                    summryMy.write(string)
+                                if dist['DIST'] - dist['I'] <= 10 and candidate_key[:5] == "00000":
                                     ok = True
                                     tmpOk = True
-                                    dist['DIST - INSERTIONS'] = dist['DIST'] - dist['I']
-
-                                elif dist['DIST'] - dist['I'] <= 10:
+                                elif dist['DIST'] <= 10:
                                     ok = True
                                     tmpOk = True
 
+                            string = "\nDIST-INSERTION = " + str(dist['DIST'] - dist['I'])
+                            summryMy.write(string)
+                            dist['DIST - INSERTIONS'] = dist['DIST'] - dist['I']
                             worksheet.write(r, tmpC, int(dist['DIST']))
                             # worksheet.write(r+1, c, int(dist['DIST']-dist['I']))
                             worksheet.write(r + 1, tmpC, str(dist))
