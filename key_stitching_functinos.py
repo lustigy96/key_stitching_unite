@@ -520,6 +520,62 @@ def build_samples_continues(key, sample_begin, sample_end, sample_len, window_si
     print 'DONE!'
     return result_df, result_dict
 
+
+
+
+def build_fragments_continues(key, sample_begin, sample_end, sample_len,  flip_probability, delete_probability, insert_probability, samples):
+    '''
+    build key fragments
+    '''
+    n = len(key)
+    for sample_idx in xrange(sample_begin, sample_end):
+        if sample_idx % 1000 == 0:
+            print sample_idx
+        sample_start = np.random.randint(n - sample_len + 1)
+        sample = np.array(list(key[sample_start:sample_start + sample_len])).astype(int)
+        # flip random bits
+        rand_flip = (np.random.rand(len(sample)) < flip_probability).astype(int)
+        sample[np.where(rand_flip > 0)] = 1 - sample[np.where(rand_flip > 0)]
+        # delete random bits
+        rand_delete = (np.random.rand(len(sample)) < delete_probability).astype(int)
+        sample = sample[np.where(rand_delete == 0)]
+        # insert random bits
+        rand_insert = (np.random.rand(len(sample) + 1) < insert_probability).astype(int)
+        rand_bits_to_insert = (np.random.rand(sum(rand_insert)) > 0.5).astype(int)
+        sample = np.insert(sample, np.where(rand_insert == 1)[0], rand_bits_to_insert)
+        samples.append(sample)
+    print 'DONE build fragments'
+    return samples
+
+
+
+def build_window_samples_(window_size, samples):
+    '''
+    build samples from key fragments
+    '''
+    result_dict = {}
+    for sample in samples:
+        for window_start in xrange(len(sample) - window_size + 1):
+            window = sample[window_start:window_start + window_size]
+            window_key = ''.join(window.astype(str))
+            if window_key not in result_dict:
+                result_dict[window_key] = {'sample': window_key,
+                                           'count': 1,
+                                           'weight': sum(window),
+                                           }
+            else:
+                result_dict[window_key]['count'] += 1
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index')
+    print 'DONE build samples'
+    return result_df, result_dict
+
+
+
+
+
+
+
+
 def build_shift_pointers_position_better(common_samples_df, stitch_shift_size, window_size):
     '''
     build DAG where snippets are connected if they can be stitched by a small shift
