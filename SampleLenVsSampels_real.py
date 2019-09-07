@@ -10,9 +10,16 @@ def Probe(probe_len, codeName):
     paths = {
         "Haswell":
             {
-                180: [],
-                230: ["./samples/Haswell/probe230/good_decoded_samples.txt"],
-                300: [],
+                180: ["./samples/Haswell/Haswell/work/180/good_decoded_samples.txt"],
+                190: ["./samples/Haswell/Haswell/work/190/good_decoded_samples.txt"],
+                230: ["./samples/Haswell/Haswell/work/230/good_decoded_samples_v1.txt",
+                      "./samples/Haswell/Haswell/work/230/good_decoded_samples_v2.txt",
+                      "./samples/Haswell/Haswell/work/230/good_decoded_samples_v3.txt"],
+                260: ["./samples/Haswell/Haswell/work/230/good_decoded_samples_v1.txt",
+                      "./samples/Haswell/Haswell/work/230/good_decoded_samples_v3.txt"],
+
+                400: ["./samples/Haswell/Haswell/work/400/good_decoded_samples.txt"],
+                550: ["./samples/Haswell/Haswell/work/550/good_decoded_samples.txt"],
             },
         "CoffeeLake":
             {
@@ -20,6 +27,7 @@ def Probe(probe_len, codeName):
                 140: ["./samples/CoffeeLake/140/good_decoded_samples.txt"],
                 150: ["./samples/CoffeeLake/150/good_decoded_samples.txt"],
                 160: ["./samples/CoffeeLake/160/good_decoded_samples.txt"],
+                170: ["./samples/CoffeeLake/170/good_decoded_samples.txt"],
                 180: ["./samples/CoffeeLake/180/good_decoded_samples.txt"],
                 190: ["./samples/CoffeeLake/190/good_decoded_samples.txt"],
                 200: ["./samples/CoffeeLake/200/good_decoded_samples.txt"],
@@ -126,7 +134,7 @@ def PrintToSummryFile(file, key, key_length, candidate_key, samples_num, result_
 
 
 
-#------------------------------------------------if __name__ == "__main__":-----------------------------------------------------------------------
+#------------------------------------------------if __name__ == "__main__":----------------------------------------------------------------------
 
 DIR_RESULT_PATH = "./results"
 DIR_PATH_REALCHANNEL = "/realChannel"
@@ -142,13 +150,13 @@ hex_key_2048 = "40554dc4edd210b27e4be5d4d6dcde0f3ab8199730db8a5cf3f3d1617d956cd7
 
 key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
 
-probe_len_vec = [150, 160, 180, 190, 200, 230, 260, 300, 350, 400, 550, 700]  # [180, 230, 300]
-window_size_vec = [25, 30]
-low = 300000
-samples_num_vec = range(300000, 1500000, low)
-med = 100000
-high = 10000
-Fhigh = 2000
+probe_len_vec = [150,160,170,180,190, 200,230,260, 300,350, 400,550, 700]  # [180,190,230,260,400,550]
+window_size_vec = [30]
+low = 50000
+samples_num_vec = range(50000, 700001, low)
+med = 10000
+high = 2000
+Fhigh = 500
 quantile_vec = [0.9, 0.6]  # each has
 method_vec = ["notOpposite", "Opposite"]
 
@@ -180,7 +188,6 @@ for window_size in window_size_vec:
     workbook = xlsxwriter.Workbook(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH +
                                    '/table{0}_window_size{1}.xlsx'
                                    .format(key_length, window_size))
-
     worksheet = workbook.add_worksheet()
 
     r = -4
@@ -193,6 +200,11 @@ for window_size in window_size_vec:
         tableResult["cpuName_{0}".format(codeName)][
             "key_length{0}".format(key_length)][
             "window_size{0}".format(window_size)]["quantile{0}".format(quantile)] = {}
+
+        workbookQ = xlsxwriter.Workbook(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + QUANTILE_NUM_PATH +
+                                       '/table{0}_window_size{1}_q{2}.xlsx'
+                                       .format(key_length, window_size,quantile))
+        worksheetQ = workbookQ.add_worksheet()
 
         c = -2
 
@@ -243,11 +255,12 @@ for window_size in window_size_vec:
 
                     tmpOk[method] = "BAD"
                     if dist[method]['DIST'] < 25:
-                        if dist[method]['DIST'] - dist[method]['I'] <= 10 and candidate_key[method][:5] == "00000":
+                        if dist[method]['DIST'] - dist[method]['I'] <= 10 \
+                                and candidate_key[method][:5] == "00000":
                             tmpOk[method] = "GOOD"
                             OK1 = True
-                        elif dist[method]['DIST'] - dist[method]['I'] <= 10 and candidate_key[method][
-                                                                                :-5] == "00000":
+                        elif dist[method]['DIST'] - dist[method]['I'] <= 10 \
+                                and candidate_key[method][:-5] == "00000":
                             tmpOk[method] = "GOOD"
                             OK1 = True
                         elif dist[method]['DIST'] <= 10:
@@ -316,17 +329,59 @@ for window_size in window_size_vec:
                         summryMy.close()
 
                         dist[method]['DIST - INSERTIONS'] = dist[method]['DIST'] - dist[method]['I']
+
+                        #---------------------------------------------------
+                        worksheetQ.write(0, tmpC, int(dist[method]['DIST']))
+                        worksheetQ.write(1, tmpC, str(dist[method]))
+                        worksheetQ.write(2, tmpC, tmpOk[method])
+                        worksheetQ.write(3, tmpC, int(samples_num))
+
+                        #-----------------------------------------------------
                         worksheet.write(r, tmpC, int(dist[method]['DIST']))
-                        # worksheet.write(r+1, c, int(dist['DIST']-dist['I']))
                         worksheet.write(r + 1, tmpC, str(dist[method]))
                         worksheet.write(r + 2, tmpC, tmpOk[method])
                         worksheet.write(r + 3, tmpC, int(samples_num))
                         tmpC += 1
 
-                        tableFile = open(
-                            DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + "/real{0}.json".format(key_length), "w")
+                        tableFileP = open(DIR_RESULT_PATH +
+                                          DIR_PATH_REALCHANNEL +
+                                          CODE_NAME_PATH +
+                                          KEY_LENGTH_PATH +
+                                          WINDOWS_SIZE_PATH +
+                                          QUANTILE_NUM_PATH +
+                                          "/real{0}_W{1}_Q{2}_probe{3}.json".format(key_length, window_size, quantile,
+                                                                                    probe_len),
+                                          "w")
+                        tableFileP.write(
+                            str(tableResult["cpuName_{0}".format(codeName)][
+                                    "key_length{0}".format(key_length)][
+                                    "window_size{0}".format(window_size)][
+                                    "quantile{0}".format(quantile)][
+                                    "probe_len{0}".format(probe_len)])
+                        )
+                        tableFileP.close()
+
+                        tableFileQ = open(DIR_RESULT_PATH +
+                                          DIR_PATH_REALCHANNEL +
+                                          CODE_NAME_PATH +
+                                          KEY_LENGTH_PATH +
+                                          WINDOWS_SIZE_PATH +
+                                          "/real{0}_W{1}_Q{2}.json".format(key_length, window_size, quantile),
+                                          "w")
+                        tableFileQ.write(str(tableResult["cpuName_{0}".format(codeName)][
+                                                 "key_length{0}".format(key_length)][
+                                                 "window_size{0}".format(window_size)][
+                                                 "quantile{0}".format(quantile)]))
+                        tableFileQ.close()
+
+                        tableFile = open(DIR_RESULT_PATH +
+                                         DIR_PATH_REALCHANNEL +
+                                         "/real{0}.json".format(key_length),
+                                         "w")
                         tableFile.write(str(tableResult))
                         tableFile.close()
+
+
 
                 elif OK1:
                     OK2 = False
@@ -584,10 +639,17 @@ for window_size in window_size_vec:
                                                 summryMy.write(string)
                                                 summryMy.close()
 
-                                                dist4[method]['DIST - INSERTIONS'] = dist4[method]['DIST'] - dist4[method][
-                                                    'I']
+                                                dist4[method]['DIST - INSERTIONS'] = \
+                                                    dist4[method]['DIST'] - dist4[method]['I']
+
+                                                # ---------------------------------------------
+                                                worksheetQ.write(0, tmpC, int(dist4[method]['DIST']))
+                                                worksheetQ.write(1, tmpC, str(dist4[method]))
+                                                worksheetQ.write(2, tmpC, tmpOk4[method])
+                                                worksheetQ.write(3, tmpC, int(samples_numFH))
+
+                                                #---------------------------------------------
                                                 worksheet.write(r, tmpC, int(dist4[method]['DIST']))
-                                                # worksheet.write(r+1, c, int(dist4['DIST']-dist4['I']))
                                                 worksheet.write(r + 1, tmpC, str(dist4[method]))
                                                 worksheet.write(r + 2, tmpC, tmpOk4[method])
                                                 worksheet.write(r + 3, tmpC, int(samples_numFH))
@@ -602,6 +664,42 @@ for window_size in window_size_vec:
                                                     "probe_len{0}".format(probe_len)][
                                                     "samples_num{0}".format(samples_numFH)]["{0}".format(method)] = dist4[method]
 
+
+
+                                                tableFileP = open(DIR_RESULT_PATH +
+                                                                  DIR_PATH_REALCHANNEL +
+                                                                  CODE_NAME_PATH +
+                                                                  KEY_LENGTH_PATH +
+                                                                  WINDOWS_SIZE_PATH +
+                                                                  QUANTILE_NUM_PATH +
+                                                                  "/real{0}_W{1}_Q{2}_probe{3}.json".format(key_length, window_size, quantile, probe_len),
+                                                                  "w")
+                                                tableFileP.write(
+                                                    str(tableResult["cpuName_{0}".format(codeName)][
+                                                    "key_length{0}".format(key_length)][
+                                                    "window_size{0}".format(window_size)][
+                                                    "quantile{0}".format(quantile)][
+                                                    "probe_len{0}".format(probe_len)])
+                                                )
+                                                tableFileP.close()
+
+
+
+                                                tableFileQ = open(DIR_RESULT_PATH +
+                                                                  DIR_PATH_REALCHANNEL +
+                                                                  CODE_NAME_PATH +
+                                                                  KEY_LENGTH_PATH +
+                                                                  WINDOWS_SIZE_PATH +
+                                                                  "/real{0}_W{1}_Q{2}.json".format(key_length,window_size,quantile),
+                                                                  "w")
+                                                tableFileQ.write(str(tableResult["cpuName_{0}".format(codeName)][
+                                                    "key_length{0}".format(key_length)][
+                                                    "window_size{0}".format(window_size)][
+                                                    "quantile{0}".format(quantile)]))
+                                                tableFileQ.close()
+
+
+
                                                 tableFile = open(DIR_RESULT_PATH +
                                                                  DIR_PATH_REALCHANNEL +
                                                                  "/real{0}.json".format(key_length),
@@ -609,4 +707,5 @@ for window_size in window_size_vec:
                                                 tableFile.write(str(tableResult))
                                                 tableFile.close()
 
+        workbookQ.close()
     workbook.close()
