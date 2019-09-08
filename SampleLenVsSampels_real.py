@@ -201,7 +201,7 @@ for window_size in window_size_vec:
             "key_length{0}".format(key_length)][
             "window_size{0}".format(window_size)]["quantile{0}".format(quantile)] = {}
 
-        workbookQ = xlsxwriter.Workbook(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + QUANTILE_NUM_PATH +
+        workbookQ = xlsxwriter.Workbook(DIR_RESULT_PATH + DIR_PATH_REALCHANNEL + CODE_NAME_PATH + KEY_LENGTH_PATH + WINDOWS_SIZE_PATH +
                                        '/table{0}_window_size{1}_q{2}.xlsx'
                                        .format(key_length, window_size,quantile))
         worksheetQ = workbookQ.add_worksheet()
