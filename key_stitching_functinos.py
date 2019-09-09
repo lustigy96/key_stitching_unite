@@ -1569,7 +1569,7 @@ def build_shift_pointers_yael_error_fixer(common_samples_array, stitch_shift_siz
                     break
             if break_stitch_shift_loop:
                 break
-    print 'DONE!'
+    print 'DONE!!'
     return shift_pointers
 
 
