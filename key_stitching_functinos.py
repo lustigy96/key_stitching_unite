@@ -478,6 +478,84 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BORIS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
+def All_possible_window_strings(key, window_size):
+    """
+    this function return all possible strings with size of "window_size" in a given key shifting bit by bit
+    where the max possible strings is  (K-W)
+    :param key:
+    :param window_size:
+    :return: dict with all strings, and its possition in the key
+    """
+    K = len(key)
+    W = window_size
+    allGoodPossible = {}
+    for i in xrange(0, K - W + 1):
+        sample = key[i: i + window_size]
+        if sample not in allGoodPossible:
+            allGoodPossible[sample] = {"sample": sample,
+                                       "position": [i],
+                                       "count": 0
+                                       }
+        else:
+            allGoodPossible[sample]["position"] = allGoodPossible[sample]["position"].append(i)
+
+    return allGoodPossible
+
+def build_samples_continues_with_statistics_of_good(key, sample_begin, sample_end, fragment_len, window_size,
+        flip_probability, delete_probability, insert_probability, result_dict, allGoodPossible):
+    '''
+     this function build errored samples from given key string, with given fragment len and window size, store the data
+     in result_dict, and also can collect statistic of all good possible samples in this key
+    :param key: binary key
+    :param sample_begin: if result_dict not empty
+    :param sample_end: how mnay
+    :param fragment_len: length of single fragment
+    :param window_size: size of the window for sliding window pahse
+    :param flip_probability: flip_probability
+    :param delete_probability: delete_probability
+    :param insert_probability: insert_probability
+    :param result_dict: data which already been build, and needed to be continued
+    :param allGoodPossible: dict with all possible good string for that key, shifted bit by bit
+    :return: data frame, and dict
+    '''
+    print 'building samples...'
+    n = len(key)
+    for sample_idx in xrange(sample_begin, sample_end):
+        if sample_idx % 1000 == 0:
+            print sample_idx
+        sample_start = np.random.randint(n - fragment_len + 1)
+        sample = np.array(list(key[sample_start:sample_start + fragment_len])).astype(int)
+        # flip random bits
+        rand_flip = (np.random.rand(len(sample)) < flip_probability).astype(int)
+        sample[np.where(rand_flip > 0)] = 1 - sample[np.where(rand_flip > 0)]
+        # delete random bits
+        rand_delete = (np.random.rand(len(sample)) < delete_probability).astype(int)
+        sample = sample[np.where(rand_delete == 0)]
+        # insert random bits
+        rand_insert = (np.random.rand(len(sample) + 1) < insert_probability).astype(int)
+        rand_bits_to_insert = (np.random.rand(sum(rand_insert)) > 0.5).astype(int)
+        sample = np.insert(sample, np.where(rand_insert == 1)[0], rand_bits_to_insert)
+        # scan windows of sample
+        for window_start in xrange(len(sample) - window_size + 1):
+            window = sample[window_start:window_start + window_size]
+            window_key = ''.join(window.astype(str))
+
+
+            if window_key not in result_dict:
+                result_dict[window_key] = {
+                                           'count': 1,
+                                           }
+            else:
+                result_dict[window_key]['count'] += 1
+
+            if window_key in allGoodPossible:
+                allGoodPossible[window_key]['count'] += 1
+
+    result_df = pd.DataFrame.from_dict(result_dict, orient='index')
+    print 'DONE!'
+    return result_df, result_dict, allGoodPossible
+
+
 def build_samples_continues(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
     '''
     build snippets dataset, where each sample is noisified, and then sliced using a sliding window into snippets
