@@ -3,7 +3,7 @@ import pandas as pd
 import key_stitching_functinos as func
 from key_stitching_functinos import build_samples_continues
 import os
-import matplotlib.pyplot as
+import matplotlib.pyplot as plt
 
 error_dict = {
     "mixed": {"f": 0.05,
@@ -29,7 +29,7 @@ key = func.init_key(2048, -1)
 key_length = len(key)
 key = func.init_key(key_length, -1)
 fragment_len = 40
-samples_number = 200000
+samples_number = 200
 window_size = 22
 
 result_df = {"onlyFips":None, "onlydDels": None, "onlydiIns": None , "mixed": None}
@@ -43,4 +43,10 @@ for type in result_df.keys():
     result_df[type] = result_df[type].sort_values('count', ascending=False)
     TotalSum = result_df[type]['count'].sum()
     result_df[type]['count'] = result_df[type]['count']/ TotalSum
+
+
+n_rows = result_df["onlyFips"].shape[0]
+
+result_df["onlyFips"].plot(y="count", use_index=True)
+print "done"
 
