@@ -40,6 +40,8 @@ def Compute_precitle_of_good_samples(allGoodPossible, result_df, percentileArray
             percentileArray["80-90"][expNum] += 1
         elif allGoodPossible[goodSample]["count"] > 9*precentile10:
             percentileArray["90-100"][expNum] += 1
+    return percentileArray
+
 
 def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, fragment_len, fragments_number, window_size, allGoodPossible ):
     """this function genertes several expiriments of given error type in order to collect some statistcs
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 40
-    fragments_number = 2000
+    fragments_number = 100000
     window_size = 22
     numberOfExpiriments = 1
 
