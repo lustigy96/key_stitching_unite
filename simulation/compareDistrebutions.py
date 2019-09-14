@@ -106,23 +106,10 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 if __name__ == "__main__":
 
     error_dict = {
-        "mixed": {"f": 0.05,
-                  "d": 0.05,
-                  "i": 0.05,
-                  },
-        "onlyFips": {"f": 0.15,
-                     "d": 0.0,
-                     "i": 0.0,
-                     },
-        "onlyDeletions": {"f": 0.0,
-                          "d": 0.15,
-                          "i": 0.0,
-                          },
-        "onlyInsertions": {"f": 0.0,
-                           "d": 0.0,
-                           "i": 0.15,
-                           }
-
+        "mixed": {"f": 0.05, "d": 0.05, "i": 0.05},
+        "onlyFips": {"f": 0.15, "d": 0.0, "i": 0.0,},
+        "onlyDeletions": {"f": 0.0, "d": 0.15, "i": 0.0},
+        "onlyInsertions": {"f": 0.0, "d": 0.0, "i": 0.15}
     }
 
     hex_key_2048 = "40554dc4edd210b27e4be5d4d6dcde0f3ab8199730db8a5cf3f3d1617d956cd7dfa0b1e7f82f0b0949d67f7b2b3f84e62537d41eb0142aaf1f84aa6d74b1e0aa2bf82f84298e6d9f6aa580c75905bda8508aad6b73f75862246a7aebe964d543fa05b455b58a3a0f301ab9d9f4232a82e5aaed1303514109f0b4526eb5706c1d3c231e9bd9c96f647774fc923686f17b8707035db6b3f16163154c1d11276540ec776b341fe292def59bcfe161869fae2dc04de17603ae012a3b22d611a3643414e7eff365c8bd3b35323f56759dc6a9dd7704f5d760deb29e8bbd50586b8df7ee9c33d6b6abf9b625635b9db15360c5eae2b89dc4ff443722e5e6b06f71e930"
