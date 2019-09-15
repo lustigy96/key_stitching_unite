@@ -463,7 +463,7 @@ def stitch(common_samples_df, shift_pointers):
         print 'START SAMPLE: ' + start_sample
         curr_sample = start_sample
         curr_key = curr_sample
-        total_shift = 0
+        total_shishift_pointersft = 0
         while curr_sample in shift_pointers['left_index']:
             curr_key += shift_pointers['left_index'][curr_sample]['right_sample'][
                         -shift_pointers['left_index'][curr_sample]['shift']:]
@@ -478,7 +478,7 @@ def stitch(common_samples_df, shift_pointers):
 
 
 '''~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BORIS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'''
-def All_possible_window_strings(key, window_size):
+def All_possible_window_good_strings(key, window_size):
     """
     this function return all possible strings with size of "window_size" in a given key shifting bit by bit
     where the max possible strings is  (K-W)
@@ -1182,9 +1182,9 @@ def tow_dim_arr2file(pathes,f_path):
 
 
 ####-------TREES-------#####
-def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,saveIndexArray,tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
+def build_shift_pointer_thread(all2PowerWindowArray, all2PowerWindowArray_idx, saveIndexArray, tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right):
 
-    for idx1 in xrange(start_idx,end_idx):
+    for idx1 in xrange(start_idx, end_idx):
         left_sample_number = saveIndexArray[idx1]
         left_sample = np.binary_repr(num=left_sample_number, width=window_size)
         mask = 1

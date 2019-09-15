@@ -98,6 +98,11 @@ def autolabel(rects):
                     textcoords="offset points",
                     ha='center', va='bottom')
 
+
+
+
+
+
 if __name__ == "__main__":
 
     error_dict = {
@@ -111,10 +116,10 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 40
-    fragments_number = 10000
+    fragments_number = 500000
     window_size = 22
     numberOfExpiriments = 1
-    rezolution = 10
+    rezolution = 25
     resultDict = {
         "onlyFips": None,
         "onlyDeletions": None,
@@ -122,7 +127,7 @@ if __name__ == "__main__":
         "mixed": None
     }
 
-    allGoodPossible = func.All_possible_window_strings(key=key, window_size=window_size)
+    allGoodPossible = func.All_possible_window_good_strings(key=key, window_size=window_size)
 
     for i, type in enumerate(resultDict.keys(), 0):
         result =  Compute_statistics_for_spesific_error_type(type=type, numberOfExpiriments=numberOfExpiriments, key=key,
@@ -149,8 +154,8 @@ if __name__ == "__main__":
     widthBar = 0.40  # the width of the bars
     fig, ax = plt.subplots()
     rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['percentile'], widthBar/4, label='onlyFips')
-    rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['percentile'], widthBar/4, label='onlyDeletions')
-    rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['percentile'], widthBar/4, label='onlyInsertions')
+    # rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['percentile'], widthBar/4, label='onlyDeletions')
+    # rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['percentile'], widthBar/4, label='onlyInsertions')
     rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['percentile'], widthBar/4, label='mixed')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Number of good strings')
@@ -159,8 +164,8 @@ if __name__ == "__main__":
     ax.set_xticklabels(labelsF)
     ax.legend()
     autolabel(rects1)
-    autolabel(rects2)
-    autolabel(rects3)
+    # autolabel(rects2)
+    # autolabel(rects3)
     autolabel(rects4)
     fig.tight_layout()
     # plt.show()
