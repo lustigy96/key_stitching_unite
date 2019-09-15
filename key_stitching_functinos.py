@@ -625,8 +625,6 @@ def build_fragments_continues(key, sample_begin, sample_end, sample_len,  flip_p
     print 'DONE build fragments'
     return samples
 
-
-
 def build_window_samples_(window_size, samples):
     '''
     build samples from key fragments
@@ -646,11 +644,6 @@ def build_window_samples_(window_size, samples):
     result_df = pd.DataFrame.from_dict(result_dict, orient='index')
     print 'DONE build samples'
     return result_df, result_dict
-
-
-
-
-
 
 
 
@@ -845,6 +838,8 @@ def build_shift_pointers_noDict(common_samples_df, stitch_shift_size, window_siz
                     break
     print 'DONE building DAG_noDict!'
     return all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift
+
+
 def stitch_boris_noDict(common_samples_df,  all2PowerWindowArray_idx, shift_pointers_right_index, shift_pointers_right_index_left, shift_pointers_right_index_shift, shift_pointers_left_index, shift_pointers_left_index_right, shift_pointers_left_index_shift, allowCycle=False, key_length=None):
     print 'stitch_boris_noDict...'
     common_samples_array = np.array(common_samples_df['sample'])
