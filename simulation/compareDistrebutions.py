@@ -3,7 +3,7 @@ import pandas as pd
 import key_stitching_functinos as func
 from key_stitching_functinos import build_samples_continues
 import os
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from bitstring import BitArray
 
 
@@ -60,26 +60,17 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
     varianceArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     percentileArray = {}
     percentile = {}
+
     percentileArray["0-10"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["0-10"] = 0
     percentileArray["10-20"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["10-20"] = 0
     percentileArray["20-30"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["20-30"] = 0
     percentileArray["30-40"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["30-40"] = 0
     percentileArray["40-50"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["40-50"] = 0
     percentileArray["50-60"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["50-60"] = 0
     percentileArray["60-70"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["60-70"] = 0
     percentileArray["70-80"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["70-80"] = 0
     percentileArray["80-90"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["80-90"] = 0
     percentileArray["90-100"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
-    percentile["90-100"] = 0
 
     error =  error_dict[type]
     for expNum in xrange(0,numberOfExpiriments):
@@ -91,17 +82,36 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
         varianceArray[expNum] = result_df["count"].var()
         percentileArray = Compute_precitle_of_good_samples(allGoodPossible=allGoodPossible, result_df=result_df,
                                                           percentileArray=percentileArray, expNum=expNum)
-    for dkey in percentileArray.keys():
-        percentile[dkey] = percentileArray[dkey].mean()
+    percentile2 = np.zeros(10, dtype=np.float64)
+    percentile2[0] = percentileArray["0-10"].mean()
+    percentile2[1] = percentileArray["10-20"].mean()
+    percentile2[2] = percentileArray["20-30"].mean()
+    percentile2[3] = percentileArray["30-40"].mean()
+    percentile2[4] = percentileArray["40-50"].mean()
+    percentile2[5] = percentileArray["50-60"].mean()
+    percentile2[6] = percentileArray["60-70"].mean()
+    percentile2[7] = percentileArray["70-80"].mean()
+    percentile2[8] = percentileArray["80-90"].mean()
+    percentile2[9] = percentileArray["90-100"].mean()
+
+
 
     mean = meanArray.mean()
     variance = varianceArray.mean()
-    result = {"mean":mean , "variance":variance,"percentile":percentile}
+    result = {"mean":mean , "variance":variance,"percentile":percentile2}
     return result
 
 
 
-
+def autolabel(rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{}'.format(height),
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
 
 if __name__ == "__main__":
 
@@ -116,20 +126,21 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 40
-    fragments_number = 100000
+    fragments_number = 100
     window_size = 22
     numberOfExpiriments = 1
 
     resultDict = {"onlyFips": None, "onlyDeletions": None, "onlyInsertions": None, "mixed": None}
 
-    # fig, axes = plt.subplots(nrows=2, ncols=2)
+    # fig, ax = plt.subplots()
+    # subp = {
+    #     0: {"r": 0, "c": 0},
+    #     1: {"r": 0, "c": 1},
+    #     2: {"r": 1, "c": 0},
+    #     3: {"r": 1, "c": 1},
+    # }
 
-    subp = {
-        0: {"r": 0, "c": 0},
-        1: {"r": 0, "c": 1},
-        2: {"r": 1, "c": 0},
-        3: {"r": 1, "c": 1},
-    }
+
 
     allGoodPossible = func.All_possible_window_strings(key=key, window_size=window_size)
 
@@ -141,19 +152,79 @@ if __name__ == "__main__":
 
 
 
-        # TotalSum = result_df[type]['count'].sum()
-        # result_df[type]['count'] = result_df[type]['count']/ TotalSum
-
-
-        # n_rows = result_df[type].shape[0]
-        # x = range(0, n_rows)
-        # y = result_df[type]["count"]
-        # axes[subp[i]["r"], subp[i]["c"]].set_title(type + " errors")
-        # axes[subp[i]["r"], subp[i]["c"]].plot(x, y, marker='o', linewidth=1, markersize=1)
-        # axes[subp[i]["r"], subp[i]["c"]].grid()
-    #
-    #
+    labelsF = ['(0-10)%', '(10-20)%', '(20-30)%', '(30-40)%', '(40-50)%', '(50-60)%', '(60-70)%', '(70-80)%',
+               '(80-90)%', '(90-100)%']
+    x = np.arange(len(labelsF))  # the label locations
+    widthBar = 0.40  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['percentile'], widthBar/4, label='onlyFips')
+    rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['percentile'], widthBar/4, label='onlyDeletions')
+    rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['percentile'], widthBar/4, label='onlyInsertions')
+    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['percentile'], widthBar/4, label='mixed')
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Number of good strings')
+    ax.set_title('percentile of good strings')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labelsF)
+    ax.legend()
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
+    autolabel(rects4)
+    fig.tight_layout()
     # plt.show()
+
+
+    labelsF = ['mean']
+    x = np.arange(len(labelsF))  # the label locations
+    widthBar = 0.40  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['mean'], widthBar/4, label='onlyFips')
+    rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['mean'], widthBar/4, label='onlyDeletions')
+    rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['mean'], widthBar/4, label='onlyInsertions')
+    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['mean'], widthBar/4, label='mixed')
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('the mean value')
+    ax.set_title('the mean value of strings')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labelsF)
+    ax.legend()
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
+    autolabel(rects4)
+    fig.tight_layout()
+
+
+
+
+    labelsF = ['variance']
+    x = np.arange(len(labelsF))  # the label locations
+    widthBar = 0.40  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['variance'], widthBar/4, label='onlyFips')
+    rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['variance'], widthBar/4, label='onlyDeletions')
+    rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['variance'], widthBar/4, label='onlyInsertions')
+    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['variance'], widthBar/4, label='mixed')
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('variance value')
+    ax.set_title('the variance value of all strings')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labelsF)
+    ax.legend()
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
+    autolabel(rects4)
+    fig.tight_layout()
+
+
+    plt.show()
+
+
+
+
+
 
 
 
