@@ -9,7 +9,7 @@ from bitstring import BitArray
 
 
 
-def Compute_precitle_of_good_samples(allGoodPossible, result_df, percentileArray, expNum):
+def Compute_precitle_of_good_samples(allGoodPossible, result_df, percentileArray, expNum, max, min):
     """
     this function computes for specific experiment in which precitles and how many good samples are
     :param allGoodPossible: dict of good sample and its count {"1010100..": count}
@@ -17,10 +17,13 @@ def Compute_precitle_of_good_samples(allGoodPossible, result_df, percentileArray
     :param percentileArray:
     :param expNum:
     """
-    max = result_df["count"].max()
-    precentile10 = max / 10
+
+    precentile10 = (max-min) / 10
+
     for goodSample in allGoodPossible.keys():
-        if allGoodPossible[goodSample]["count"] <= 1*precentile10:
+        if allGoodPossible[goodSample]["count"] == 0:
+            percentileArray["0"][expNum] += 1
+        elif allGoodPossible[goodSample]["count"] > 0 and allGoodPossible[goodSample]["count"] <= 1*precentile10:
             percentileArray["0-10"][expNum] += 1
         elif allGoodPossible[goodSample]["count"] > 1*precentile10 and allGoodPossible[goodSample]["count"] <= 2*precentile10:
             percentileArray["10-20"][expNum] += 1
@@ -58,9 +61,11 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
     """
     meanArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     varianceArray = np.zeros(numberOfExpiriments, dtype=np.float64)
+    maxArray = np.zeros(numberOfExpiriments, dtype=np.int)
+    minArray = np.zeros(numberOfExpiriments, dtype=np.int)
     percentileArray = {}
     percentile = {}
-
+    percentileArray["0"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
     percentileArray["0-10"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
     percentileArray["10-20"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
     percentileArray["20-30"] = np.zeros(numberOfExpiriments, dtype=np.uint32)
@@ -80,8 +85,12 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
                                     insert_probability=error["i"], result_dict={}, allGoodPossible=allGoodPossible)
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
+        maxArray[expNum] = result_df["count"].max()
+        minArray[expNum] = result_df["count"].min()
         percentileArray = Compute_precitle_of_good_samples(allGoodPossible=allGoodPossible, result_df=result_df,
-                                                          percentileArray=percentileArray, expNum=expNum)
+                                                           percentileArray=percentileArray, expNum=expNum,
+                                                           max=maxArray[expNum],
+                                                           min=minArray[expNum])
     percentile2 = np.zeros(10, dtype=np.float64)
     percentile2[0] = percentileArray["0-10"].mean()
     percentile2[1] = percentileArray["10-20"].mean()
@@ -98,7 +107,9 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 
     mean = meanArray.mean()
     variance = varianceArray.mean()
-    result = {"mean":mean , "variance":variance,"percentile":percentile2}
+    max = maxArray.mean()
+    min = minArray.mean()
+    result = {"mean":mean , "variance":variance,"percentile":percentile2, 'goodDidntShowed':percentileArray["0"].mean(), 'max':max, 'min': min}
     return result
 
 
@@ -126,7 +137,7 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 40
-    fragments_number = 100
+    fragments_number = 500000
     window_size = 22
     numberOfExpiriments = 1
 
@@ -150,7 +161,11 @@ if __name__ == "__main__":
                                                              window_size=window_size, allGoodPossible=allGoodPossible)
         resultDict[type] = result
 
+        for goodSample in allGoodPossible.keys():
+            allGoodPossible[goodSample]["count"] = 0
 
+
+    print str(resultDict)
 
     labelsF = ['(0-10)%', '(10-20)%', '(20-30)%', '(30-40)%', '(40-50)%', '(50-60)%', '(60-70)%', '(70-80)%',
                '(80-90)%', '(90-100)%']

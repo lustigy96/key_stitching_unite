@@ -1200,6 +1200,8 @@ def build_shift_pointer_thread(all2PowerWindowArray,all2PowerWindowArray_idx,sav
                     tree_pointers[idx1].append({'next': idx2,'shift': stitch_shift})
                     if idx2 not in rm_right: rm_right.append(idx2)
     print "done: "+str(start_idx)+"-"+str(end_idx)
+
+
 def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size):
     '''
     Build the tree pointers
