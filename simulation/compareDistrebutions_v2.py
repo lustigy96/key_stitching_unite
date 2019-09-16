@@ -72,7 +72,7 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 
         last_index__of_good_window  = result_df.loc[0]
         for index in result_df.index:
-            CDFArray[expNum] = 1
+            CDFArray[expNum] = 2
 
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
