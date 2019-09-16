@@ -488,21 +488,21 @@ def All_possible_window_good_strings(key, window_size):
     """
     K = len(key)
     W = window_size
-    allGoodPossible = {}
+    allGoodPossible_dict = {}
     for i in xrange(0, K - W + 1):
         sample = key[i: i + window_size]
-        if sample not in allGoodPossible:
-            allGoodPossible[sample] = {"sample": sample,
+        if sample not in allGoodPossible_dict:
+            allGoodPossible_dict[sample] = {"sample": sample,
                                        "position": [i],
                                        "count": 0
                                        }
         else:
-            allGoodPossible[sample]["position"] = allGoodPossible[sample]["position"].append(i)
+            allGoodPossible_dict[sample]["position"] = allGoodPossible_dict[sample]["position"].append(i)
 
-    return allGoodPossible
+    return allGoodPossible_dict
 
 def build_samples_continues_with_statistics_of_good(key, sample_begin, sample_end, fragment_len, window_size,
-        flip_probability, delete_probability, insert_probability, result_dict, allGoodPossible):
+        flip_probability, delete_probability, insert_probability, result_dict, allGoodPossible_dict):
     '''
      this function build errored samples from given key string, with given fragment len and window size, store the data
      in result_dict, and also can collect statistic of all good possible samples in this key
@@ -542,18 +542,19 @@ def build_samples_continues_with_statistics_of_good(key, sample_begin, sample_en
 
 
             if window_key not in result_dict:
-                result_dict[window_key] = {
+                result_dict[window_key] = {'sample': window_key,
                                            'count': 1,
                                            }
             else:
                 result_dict[window_key]['count'] += 1
 
-            if window_key in allGoodPossible:
-                allGoodPossible[window_key]['count'] += 1
+            if window_key in allGoodPossible_dict:
+                allGoodPossible_dict[window_key]['count'] += 1
 
     result_df = pd.DataFrame.from_dict(result_dict, orient='index')
+    allGoodPossible_df = pd.DataFrame.from_dict(allGoodPossible_dict, orient='index')
     print 'DONE!'
-    return result_df, result_dict, allGoodPossible
+    return result_df, result_dict, allGoodPossible_df, allGoodPossible_dict
 
 
 def build_samples_continues(key, sample_begin, sample_end, sample_len, window_size, flip_probability, delete_probability, insert_probability, result_dict):
@@ -1164,6 +1165,72 @@ def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_point
         if key not in retrieved_key:
             print "[ERROR][compareDictAndNoDict][retrieved_key2]: retrieved_key2 have key which retrieved_key doesnt"
             sys.exit(1)
+
+
+
+
+
+
+    # return tree_pointers, edge_left_pointers
+
+
+
+def stitch_with_cycles(tree_pointers, edge_left_pointers):
+
+    '''
+    stitch the tree itterativly (DFS)
+    ---never run to the end, dont know if work ----
+
+    notice: the min_len_path is compared to the path_len and not to the key_len
+    '''
+    pathes = np.zeros(1, dtype=np.uint32)
+    DFS_visit_arr = [False] * len(tree_pointers)  # initiate DFS struct
+    f_path = open("./key_candidates_with_cycles", "w");
+    for root in edge_left_pointers:
+
+        stack, path = [root], []
+
+
+
+        while stack:
+            if len(pathes) > 10000:
+                tow_dim_arr2file(pathes, f_path)
+                pathes = []
+            vertex = stack.pop()
+            path.append(vertex)
+            DFS_visit_arr[vertex] = True
+            rm, booli = True, True
+
+            if len(tree_pointers[vertex]) == 0:  # end of path
+                if len(path) >= min_len_path:
+                    pathes.append(copy.deepcopy(path))
+            else:
+                for neighbor in tree_pointers[vertex]:
+                    if DFS_visit_arr[neighbor["next"]] == True:  # cycle
+                        if len(path) >= min_len_path and booli:
+                            pathes.append(copy.deepcopy(path))
+                            booli = False
+                    else:
+                        rm = False
+                        stack.append(neighbor["next"])
+
+            while (rm):  # back in the DFS
+                popped_from_path = path.pop()
+                # check if all the children were there the path should be continued
+                if path:
+                    for node in tree_pointers[path[-1]]:
+                        if node["next"] in stack:
+                            rm = False
+                else:
+                    rm = False
+                DFS_visit_arr[popped_from_path] = False
+
+    tow_dim_arr2file(pathes, f_path)
+
+
+
+
+
 
 
 
