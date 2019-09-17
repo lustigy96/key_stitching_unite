@@ -9,29 +9,6 @@ from bitstring import BitArray
 
 
 
-def Compute_precitle_of_good_samples(allGoodPossible, percentileArray, expNum, max, min, goodDidntShow, rezolution):
-    """
-    this function computes for specific experiment in which precitles and how many good samples are
-    :param allGoodPossible: dict of good sample and its count {"1010100..": count}
-    :param result_df:
-    :param percentileArray:
-    :param expNum:
-    """
-    onePrecentile = (max-min) / rezolution
-
-    for goodSample in allGoodPossible.keys():
-        if allGoodPossible[goodSample]["count"] == 0:
-            goodDidntShow[expNum] += 1
-        else:
-            for i in range(1, rezolution):
-                if allGoodPossible[goodSample]["count"] > (i-1)*onePrecentile and  allGoodPossible[goodSample]["count"] <= i*onePrecentile:
-                    percentileArray[i-1][expNum] += 1
-            if allGoodPossible[goodSample]["count"] > (rezolution-1)*onePrecentile:
-                percentileArray[rezolution-1][expNum] += 1
-
-    return percentileArray
-
-
 
 
 
@@ -41,17 +18,10 @@ def Compute_precitle_of_good_samples(allGoodPossible, percentileArray, expNum, m
 def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, fragment_len, fragments_number, window_size, allGoodPossible_dict, rezolution ):
     """this function genertes several expiriments of given error type in order to collect some statistcs
     of the such error: mean value, variance etc ..
-
-    :param type: which type of error this function would test ("onlyFips", "onlyDeletions", "onlyInsertions", "mixed")
-    :param numberOfExpiriments: how much expiriments run this test
-    :param key: random key
-    :param fragment_len: the length of single fragment
-    :param fragments_number: number of framgents
-    :param window_size: the window size for the sfs algorithem
-    :rtype: dict
-    :return: "mean", "variance"
     """
-    CDFArray = np.zeros(numberOfExpiriments, dtype=np.float64)
+    CDFArrayOffAllGood = np.zeros(numberOfExpiriments, dtype=np.uint64)
+    CDFArrayOffAllBadsInAllGoods = np.zeros(numberOfExpiriments, dtype=np.uint64)
+    CDFArrayOffAll = np.zeros(numberOfExpiriments, dtype=np.uint64)
     meanArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     varianceArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     maxArray = np.zeros(numberOfExpiriments, dtype=np.int)
@@ -66,28 +36,29 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
                                                                  window_size=window_size, flip_probability=error["f"], delete_probability=error["d"],
                                                                  insert_probability=error["i"], result_dict={}, allGoodPossible_dict=allGoodPossible_dict)
 
-        result_df = result_df.sort_values('count', ascending=False).reset_index()
-        allGoodPossible_df = allGoodPossible_df.sort_values('count', ascending=False).reset_index()
+        result_df = result_df.sort_values('count', ascending=False).reset_index() # sort and add indexes
+        allGoodPossible_df = allGoodPossible_df.sort_values('count', ascending=False).reset_index() # sort and add indexes
         idxmin = allGoodPossible_df['count'].idxmin()
-
-        last_index__of_good_window  = result_df.loc[0]
+        # min_good_sample = allGoodPossible_df['sample'].loc[idxmin]
+        last_index_of_good_window = -1
         for index in result_df.index:
-            CDFArray[expNum] = 2
+            if result_df['sample'].loc[index] in allGoodPossible_dict: #we found the index of the last good sample in all data frame
+                last_index_of_good_window = index
+
+
+        CDFArrayOffAll[expNum] = result_df['count'].sum()
+        CDFArrayOffAllGood[expNum] =  allGoodPossible_df['count'].sum()
+        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum()
 
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
         maxArray[expNum] = result_df["count"].max()
         minArray[expNum] = result_df["count"].min()
-        percentileArray = Compute_precitle_of_good_samples(allGoodPossible=allGoodPossible_dict,
-                                                           percentileArray=percentileArray,
-                                                           expNum=expNum,
-                                                           max=maxArray[expNum],
-                                                           min=minArray[expNum],
-                                                           goodDidntShow=goodDidntShow,
-                                                           rezolution=rezolution)
-    percentile = np.zeros(rezolution, dtype=np.float64)
-    for i in range(0, rezolution):
-        percentile[i] = percentileArray[i].mean()
+
+        #compute how many good samples didnt exsist in all data
+        goodDidntShow[expNum] = len(allGoodPossible_df[allGoodPossible_df['count']==0])
+
+
 
 
     mean = meanArray.mean()
@@ -96,7 +67,6 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
     min = minArray.mean()
     result = {"mean":mean ,
               "variance":variance,
-              "percentile":percentile,
               'goodDidntShowed':goodDidntShow.mean(),
               'max':max,
               'min': min}
@@ -133,7 +103,6 @@ if __name__ == "__main__":
     fragments_number = 100
     window_size = 22
     numberOfExpiriments = 1
-    rezolution = 25
     resultDict = {
         "onlyFips": None,
         # "onlyDeletions": None,
@@ -159,77 +128,6 @@ if __name__ == "__main__":
         print 'min: ' + str(resultDict[type]['min'])
         print 'goodDidntShowed: ' + str(resultDict[type]['goodDidntShowed'])
 
-    labelsF = []
-    pixel = 100/rezolution
-    for i in range(0,rezolution):
-        labelsF.append('({0}-{1})%'.format(i*pixel,(i+1)*pixel))
-
-    x = np.arange(len(labelsF))  # the label locations
-    widthBar = 0.40  # the width of the bars
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['percentile'], widthBar/4, label='onlyFips')
-    # rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['percentile'], widthBar/4, label='onlyDeletions')
-    # rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['percentile'], widthBar/4, label='onlyInsertions')
-    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['percentile'], widthBar/4, label='mixed')
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Number of good strings')
-    ax.set_title('percentile of good strings')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labelsF)
-    ax.legend()
-    autolabel(rects1)
-    # autolabel(rects2)
-    # autolabel(rects3)
-    autolabel(rects4)
-    fig.tight_layout()
-    # plt.show()
-
-
-    labelsF = ['mean']
-    x = np.arange(len(labelsF))  # the label locations
-    widthBar = 0.40  # the width of the bars
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['mean'], widthBar/4, label='onlyFips')
-    # rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['mean'], widthBar/4, label='onlyDeletions')
-    # rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['mean'], widthBar/4, label='onlyInsertions')
-    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['mean'], widthBar/4, label='mixed')
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('the mean value')
-    ax.set_title('the mean value of strings')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labelsF)
-    ax.legend()
-    autolabel(rects1)
-    # autolabel(rects2)
-    # autolabel(rects3)
-    autolabel(rects4)
-    fig.tight_layout()
-
-
-
-
-    labelsF = ['variance']
-    x = np.arange(len(labelsF))  # the label locations
-    widthBar = 0.40  # the width of the bars
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - widthBar/2, resultDict['onlyFips']['variance'], widthBar/4, label='onlyFips')
-    # rects2 = ax.bar(x - widthBar/4, resultDict['onlyDeletions']['variance'], widthBar/4, label='onlyDeletions')
-    # rects3 = ax.bar(x + widthBar/4, resultDict['onlyInsertions']['variance'], widthBar/4, label='onlyInsertions')
-    rects4 = ax.bar(x + widthBar/2, resultDict['mixed']['variance'], widthBar/4, label='mixed')
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('variance value')
-    ax.set_title('the variance value of all strings')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labelsF)
-    ax.legend()
-    autolabel(rects1)
-    # autolabel(rects2)
-    # autolabel(rects3)
-    autolabel(rects4)
-    fig.tight_layout()
-
-
-    plt.show()
 
 
 
