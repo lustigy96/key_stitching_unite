@@ -100,7 +100,7 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 23
-    fragments_number = 100
+    fragments_number = 500000
     window_size = 22
     numberOfExpiriments = 1
     resultDict = {
@@ -128,25 +128,26 @@ if __name__ == "__main__":
         print 'max: ' + str(resultDict[type]['max'])
         print 'min: ' + str(resultDict[type]['min'])
         print 'goodDidntShowed: ' + str(resultDict[type]['goodDidntShowed'])
+        print 'precent of bad strings in all good is: ' + str(float(resultDict[type]['CDFArrayOffAllBadsInAllGoods']/resultDict[type]['CDFArrayOffAllGood']))
         print "\n"
 
 
-    labelsF = ['CDFArrayOffAll', 'CDFArrayOffAllGood', 'CDFArrayOffAllBadsInAllGoods']
-    x = np.arange(len(labelsF))  # the label locations
     for type in resultDict.keys():
+        labelsF = [type]
+        x = np.arange(len(labelsF))  # the label locations
         widthBar = 0.40  # the width of the bars
         fig, ax = plt.subplots()
-        rects1 = ax.bar(x - widthBar, resultDict[type]['CDFArrayOffAll'], widthBar, label='CDFArrayOffAll')
-        rects2 = ax.bar(x, resultDict[type]['CDFArrayOffAllGood'], widthBar, label='CDFArrayOffAllGood')
-        rects3 = ax.bar(x + widthBar, resultDict[type]['CDFArrayOffAllBadsInAllGoods'], widthBar, label='CDFArrayOffAllBadsInAllGoods')
+        rects1 = ax.bar(x- widthBar/2 , resultDict[type]['CDFArrayOffAll'], widthBar, label='CDFArrayOffAll')
+        rects2 = ax.bar(x           , resultDict[type]['CDFArrayOffAllGood'], widthBar, label='CDFArrayOffAllGood')
+        rects3 = ax.bar(x + widthBar/2, resultDict[type]['CDFArrayOffAllBadsInAllGoods'], widthBar, label='CDFArrayOffAllBadsInAllGoods')
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Number of strings')
         ax.set_title('{0} - cdf statistics of good strings vs bad'.format(type))
         ax.set_xticks(x)
         ax.set_xticklabels(labelsF)
         ax.legend()
-        autolabel(rects1)
         autolabel(rects2)
+        autolabel(rects1)
         autolabel(rects3)
         fig.tight_layout()
         # plt.show()
