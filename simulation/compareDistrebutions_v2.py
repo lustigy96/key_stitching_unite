@@ -19,14 +19,14 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
     """this function genertes several expiriments of given error type in order to collect some statistcs
     of the such error: mean value, variance etc ..
     """
-    CDFArrayOffAllGood = np.zeros(numberOfExpiriments, dtype=np.uint64)
-    CDFArrayOffAllBadsInAllGoods = np.zeros(numberOfExpiriments, dtype=np.uint64)
-    CDFArrayOffAll = np.zeros(numberOfExpiriments, dtype=np.uint64)
+    CDFArrayOffAllGood = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOffAllBadsInAllGoods = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOffAll = np.zeros(numberOfExpiriments, dtype=np.int64)
     meanArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     varianceArray = np.zeros(numberOfExpiriments, dtype=np.float64)
-    maxArray = np.zeros(numberOfExpiriments, dtype=np.int)
-    minArray = np.zeros(numberOfExpiriments, dtype=np.int)
-    goodDidntShow = np.zeros(numberOfExpiriments, dtype=np.int)
+    maxArray = np.zeros(numberOfExpiriments, dtype=np.int64)
+    minArray = np.zeros(numberOfExpiriments, dtype=np.int64)
+    goodDidntShow = np.zeros(numberOfExpiriments, dtype=np.int64)
 
     error =  error_dict[type]
     for expNum in xrange(0,numberOfExpiriments):
@@ -47,7 +47,7 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 
         CDFArrayOffAll[expNum] = result_df['count'].sum()
         CDFArrayOffAllGood[expNum] =  allGoodPossible_df['count'].sum()
-        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum()
+        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum() - allGoodPossible_df['count'].sum()
 
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
