@@ -47,7 +47,7 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 
         CDFArrayOffAll[expNum] = result_df['count'].sum()
         CDFArrayOffAllGood[expNum] =  allGoodPossible_df['count'].sum()
-        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum() - allGoodPossible_df['count'].sum()
+        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum() - CDFArrayOffAllGood[expNum]
 
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
