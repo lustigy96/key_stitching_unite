@@ -100,7 +100,7 @@ if __name__ == "__main__":
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 23
-    fragments_number = 500000
+    fragments_number = 200000
     window_size = 22
     numberOfExpiriments = 1
     resultDict = {
