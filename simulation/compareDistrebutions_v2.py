@@ -12,16 +12,20 @@ from bitstring import BitArray
 
 
 
-
+def resetAllGoodCounts(allGoodPossible_dict):
+    for goodSample in allGoodPossible_dict.keys():
+        allGoodPossible_dict[goodSample]["count"] = 0
+    return allGoodPossible_dict
 
 
 def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, fragment_len, fragments_number, window_size, allGoodPossible_dict):
     """this function genertes several expiriments of given error type in order to collect some statistcs
     of the such error: mean value, variance etc ..
     """
-    CDFArrayOffAllGood = np.zeros(numberOfExpiriments, dtype=np.int64)
-    CDFArrayOffAllBadsInAllGoods = np.zeros(numberOfExpiriments, dtype=np.int64)
-    CDFArrayOffAll = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOfAllGood = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOfAllGoodAndBadToLastGood = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOfAllBadsToLastGood = np.zeros(numberOfExpiriments, dtype=np.int64)
+    CDFArrayOfAll = np.zeros(numberOfExpiriments, dtype=np.int64)
     meanArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     varianceArray = np.zeros(numberOfExpiriments, dtype=np.float64)
     maxArray = np.zeros(numberOfExpiriments, dtype=np.int64)
@@ -45,10 +49,10 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
                 last_index_of_good_window = index
 
 
-        CDFArrayOffAll[expNum] = result_df['count'].sum()
-        CDFArrayOffAllGood[expNum] =  allGoodPossible_df['count'].sum()
-        CDFArrayOffAllBadsInAllGoods[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum() - CDFArrayOffAllGood[expNum]
-
+        CDFArrayOfAll[expNum] = result_df['count'].sum()
+        CDFArrayOfAllGood[expNum] =  allGoodPossible_df['count'].sum()
+        CDFArrayOfAllBadsToLastGood[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum() - CDFArrayOfAllGood[expNum]
+        CDFArrayOfAllGoodAndBadToLastGood[expNum] = result_df['count'].loc[0:last_index_of_good_window].sum()
         meanArray[expNum] = result_df["count"].mean()
         varianceArray[expNum] = result_df["count"].var()
         maxArray[expNum] = result_df["count"].max()
@@ -56,6 +60,8 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
 
         #compute how many good samples didnt exsist at all in thw whole data
         goodDidntShow[expNum] = len(allGoodPossible_df[allGoodPossible_df['count']==0])
+
+        allGoodPossible_dict = resetAllGoodCounts(allGoodPossible_dict = allGoodPossible_dict)
 
 
 
@@ -67,9 +73,10 @@ def Compute_statistics_for_spesific_error_type(type, numberOfExpiriments, key, f
     result = {"mean":mean ,
               "variance":variance,
               'goodDidntShowed':goodDidntShow.mean(),
-              'CDFArrayOffAll' : CDFArrayOffAll.mean(),
-              'CDFArrayOffAllGood' : CDFArrayOffAllGood.mean(),
-              'CDFArrayOffAllBadsInAllGoods' : CDFArrayOffAllBadsInAllGoods.mean(),
+              'CDFArrayOfAll' : CDFArrayOfAll.mean(),
+              'CDFArrayOfAllGood' : CDFArrayOfAllGood.mean(),
+              'CDFArrayOfAllBadsToLastGood' : CDFArrayOfAllBadsToLastGood.mean(),
+              'CDFArrayOfAllGoodAndBadToLastGood' : CDFArrayOfAllGoodAndBadToLastGood.mean(),
               'max':max,
               'min': min}
     return result
@@ -90,17 +97,17 @@ def autolabel(rects):
 if __name__ == "__main__":
 
     error_dict = {
-        "mixed": {"f": 0.03, "d": 0.03, "i": 0.03},
-        "onlyFips": {"f": 0.09, "d": 0.0, "i": 0.0},
-        "onlyDeletions": {"f": 0.0, "d": 0.09, "i": 0.0},
-        "onlyInsertions": {"f": 0.0, "d": 0.0, "i": 0.09}
+        "mixed": {"f": 0.05, "d": 0.05, "i": 0.05},
+        "onlyFips": {"f": 0.15, "d": 0.0, "i": 0.0},
+        "onlyDeletions": {"f": 0.0, "d": 0.15, "i": 0.0},
+        "onlyInsertions": {"f": 0.0, "d": 0.0, "i": 0.15}
     }
 
     hex_key_2048 = "40554dc4edd210b27e4be5d4d6dcde0f3ab8199730db8a5cf3f3d1617d956cd7dfa0b1e7f82f0b0949d67f7b2b3f84e62537d41eb0142aaf1f84aa6d74b1e0aa2bf82f84298e6d9f6aa580c75905bda8508aad6b73f75862246a7aebe964d543fa05b455b58a3a0f301ab9d9f4232a82e5aaed1303514109f0b4526eb5706c1d3c231e9bd9c96f647774fc923686f17b8707035db6b3f16163154c1d11276540ec776b341fe292def59bcfe161869fae2dc04de17603ae012a3b22d611a3643414e7eff365c8bd3b35323f56759dc6a9dd7704f5d760deb29e8bbd50586b8df7ee9c33d6b6abf9b625635b9db15360c5eae2b89dc4ff443722e5e6b06f71e930"
     key = key2048 = ''.join(func.hex2bin_map[i] for i in hex_key_2048)
     key_length = len(key)
     fragment_len = 23
-    fragments_number = 200000
+    fragments_number = 700000
     window_size = 22
     numberOfExpiriments = 1
     resultDict = {
@@ -128,8 +135,12 @@ if __name__ == "__main__":
         print 'max: ' + str(resultDict[type]['max'])
         print 'min: ' + str(resultDict[type]['min'])
         print 'goodDidntShowed: ' + str(resultDict[type]['goodDidntShowed'])
-        print 'precent of bad strings in all good is: ' + str(float(resultDict[type]['CDFArrayOffAllBadsInAllGoods']/resultDict[type]['CDFArrayOffAllGood']))
+        print '(all Bads to the last good) / (all Goods and Bads to the last good): ' + str(float(resultDict[type]['CDFArrayOfAllBadsToLastGood']/resultDict[type]['CDFArrayOfAllGoodAndBadToLastGood']))
+        print '(all Goods to the last good) / (all Goods and Bads to the last good): ' + str(float(resultDict[type]['CDFArrayOfAllGood']/resultDict[type]['CDFArrayOfAllGoodAndBadToLastGood']))
+        print '(all Goods and Bads to the last good) / (all strings): ' + str(float(resultDict[type]['CDFArrayOfAllGoodAndBadToLastGood']/resultDict[type]['CDFArrayOfAll']))
         print "\n"
+
+
 
 
     for type in resultDict.keys():
@@ -137,9 +148,28 @@ if __name__ == "__main__":
         x = np.arange(len(labelsF))  # the label locations
         widthBar = 0.40  # the width of the bars
         fig, ax = plt.subplots()
-        rects1 = ax.bar(x- widthBar/2 , resultDict[type]['CDFArrayOffAll'], widthBar, label='CDFArrayOffAll')
-        rects2 = ax.bar(x           , resultDict[type]['CDFArrayOffAllGood'], widthBar, label='CDFArrayOffAllGood')
-        rects3 = ax.bar(x + widthBar/2, resultDict[type]['CDFArrayOffAllBadsInAllGoods'], widthBar, label='CDFArrayOffAllBadsInAllGoods')
+        rects1 = ax.bar(x- widthBar , resultDict[type]['CDFArrayOfAll'], widthBar, label='CDF Of All')
+        rects2 = ax.bar(x + widthBar, resultDict[type]['CDFArrayOfAllGoodAndBadToLastGood'], widthBar, label='CDF Of All Good And Bad To Last Good')
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Number of strings')
+        ax.set_title('{0} - cdf statistics'.format(type))
+        ax.set_xticks(x)
+        ax.set_xticklabels(labelsF)
+        ax.legend()
+        autolabel(rects1)
+        autolabel(rects2)
+        fig.tight_layout()
+        # plt.show()
+        
+
+    for type in resultDict.keys():
+        labelsF = [type]
+        x = np.arange(len(labelsF))  # the label locations
+        widthBar = 0.40  # the width of the bars
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x- widthBar/2 , resultDict[type]['CDFArrayOfAllGoodAndBadToLastGood'], widthBar, label='CDFArrayOfAllGoodAndBadToLastGood')
+        rects2 = ax.bar(x           , resultDict[type]['CDFArrayOfAllGood'], widthBar, label='CDFArrayOfAllGood')
+        rects3 = ax.bar(x + widthBar/2, resultDict[type]['CDFArrayOfAllBadsToLastGood'], widthBar, label='CDFArrayOfAllBadsToLastGood')
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Number of strings')
         ax.set_title('{0} - cdf statistics of good strings vs bad'.format(type))
