@@ -1216,7 +1216,7 @@ def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
         candidates[i] = common_samples_array[root]
         visited_node[root] = 0
         while True:
-            if len(candidates) > 2048:
+            if len(candidates) > 2048 + 100:
                 i +=1
                 break
 
@@ -1228,7 +1228,8 @@ def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
 
             #second time cycle break
             if(visited_node[vertex] ==2):
-               break
+                i += 1
+                break
 
             if len(tree_pointers[vertex])>1 and visited_node[vertex] ==1: #already visited take next neighobr
                 neighbor1_count = tree_pointers[vertex][0]["count"]
@@ -1255,6 +1256,7 @@ def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
                 candidates[i] += tree_pointers[vertex][0]["bit"]
                 path.append(tree_pointers[vertex][0]["next"])
             elif len(tree_pointers[vertex]) == 0:
+                i += 1
                 break
 
     return candidates

@@ -19,7 +19,7 @@ def Error(error):
         3: {"flip": 0.03,
             "del": 0.03,
             "insert": 0.03,
-            "samples_num_vec": [100000, 500000]
+            "samples_num_vec": [500000]
             #"samples_num_vec": [2000, 5000]
             },
 
