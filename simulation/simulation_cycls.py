@@ -153,7 +153,6 @@ for quantile in quantile_vec:
                         TryMkdir(p + QUANTILE_NUM_PATH + SAMPLE_LEN_PATH + ERROR_PATH + WINDOWS_SIZE_PATH +
                                  SAMPLE_NUM_PATH + METHOD_PATH)
 
-                        methodFun = help.methodFunDict[method]
 
                         tree_pointers, edge_left_pointers, common_samples_array = func.build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
                         retrieved_key[method] = func.stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array)

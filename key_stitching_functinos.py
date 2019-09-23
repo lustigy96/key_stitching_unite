@@ -1179,6 +1179,28 @@ def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_point
 
 '''-------------------------boris sorted --------------------------------------------------'''
 
+####-------TREES-------#####
+def build_shift_pointer_thread2(all2PowerWindowArray, all2PowerWindowArray_idx, saveIndexArray, tree_pointers,stitch_shift_size,start_idx,end_idx,window_size,rm_right, common_samples_array):
+
+    for idx1 in xrange(start_idx, end_idx):
+        left_sample_number = saveIndexArray[idx1]
+        left_sample = np.binary_repr(num=left_sample_number, width=window_size)
+        mask = 1
+        for stitch_shift in range(1, stitch_shift_size + 1):
+            temp = left_sample_number << stitch_shift  # shift the bit
+            temp &= ~(mask << window_size)
+            mask = (mask << 1) + 1
+
+
+            for j in xrange(2 ** stitch_shift):
+                if (all2PowerWindowArray[temp + j] > 0) and (left_sample_number != (temp + j)):
+                    right_sample = np.binary_repr(num=temp + j, width=window_size)
+                    idx2 = all2PowerWindowArray_idx[temp + j]
+
+                    tree_pointers[idx1].append({'next': idx2,'shift': stitch_shift, "count":all2PowerWindowArray[temp + j], "bit": str(j),"used":False})
+                    if idx2 not in rm_right: rm_right.append(idx2)
+    print "done: "+str(start_idx)+"-"+str(end_idx)
+
 
 def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
 
@@ -1294,7 +1316,7 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
     for thr in range(10): #creating threads
         if thr==9: end=len(saveIndexArray)-1
         else: end=(thr+1)*length_10
-        t = threading.Thread(target=build_shift_pointer_thread, kwargs={'all2PowerWindowArray':all2PowerWindowArray,
+        t = threading.Thread(target=build_shift_pointer_thread2, kwargs={'all2PowerWindowArray':all2PowerWindowArray,
                                                                 'all2PowerWindowArray_idx':all2PowerWindowArray_idx,
                                                                 'saveIndexArray':saveIndexArray,
                                                                 'tree_pointers':tree_pointers,
