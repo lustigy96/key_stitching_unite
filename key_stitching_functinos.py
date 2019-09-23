@@ -1175,65 +1175,58 @@ def compareDictAndNoDict(shift_pointers, shift_pointers_right_index, shift_point
 
 
 
-def stitch_with_cycles(tree_pointers, edge_left_pointers):
+
+
+'''-------------------------boris sorted --------------------------------------------------'''
+
+
+def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
 
     '''
-    stitch the tree itterativly (DFS)
-    ---never run to the end, dont know if work ----
 
-    notice: the min_len_path is compared to the path_len and not to the key_len
     '''
-    pathes = np.zeros(1, dtype=np.uint32)
-    DFS_visit_arr = [False] * len(tree_pointers)  # initiate DFS struct
-    f_path = open("./key_candidates_with_cycles", "w");
+    candidates =[]
+    i=0
     for root in edge_left_pointers:
 
-        stack, path = [root], []
+        visited_node = {}
+        path = [root]
+        candidates[i] = common_samples_array[root]
+        visited_node[root] = 1
+        while True:
+            if len(candidates) > 2048:
+                i +=1
+                break
 
-
-
-        while stack:
-            if len(pathes) > 10000:
-                tow_dim_arr2file(pathes, f_path)
-                pathes = []
-            vertex = stack.pop()
-            path.append(vertex)
-            DFS_visit_arr[vertex] = True
-            rm, booli = True, True
-
-            if len(tree_pointers[vertex]) == 0:  # end of path
-                if len(path) >= min_len_path:
-                    pathes.append(copy.deepcopy(path))
+            vertex = path[-1]
+            if vertex in visited_node.keys():
+                visited_node[vertex] +=1
             else:
-                for neighbor in tree_pointers[vertex]:
-                    if DFS_visit_arr[neighbor["next"]] == True:  # cycle
-                        if len(path) >= min_len_path and booli:
-                            pathes.append(copy.deepcopy(path))
-                            booli = False
-                    else:
-                        rm = False
-                        stack.append(neighbor["next"])
+                visited_node[vertex] = 1
 
-            while (rm):  # back in the DFS
-                popped_from_path = path.pop()
-                # check if all the children were there the path should be continued
-                if path:
-                    for node in tree_pointers[path[-1]]:
-                        if node["next"] in stack:
-                            rm = False
+            #second time cycle break
+            if(visited_node[vertex] ==2):
+               break
+
+            if len(tree_pointers[vertex])>2 and visited_node[vertex] ==1: #already visited take next neighobr
+                neighbor1_count = tree_pointers[vertex][0]["count"]
+                neighbor2_count = tree_pointers[vertex][1]["count"]
+
+                if neighbor2_count >= neighbor1_count: #cheak if equle
+                    candidates[i] += tree_pointers[vertex][0]["bit"]
                 else:
-                    rm = False
-                DFS_visit_arr[popped_from_path] = False
+                    candidates[i] += tree_pointers[vertex][1]["bit"]
 
-    tow_dim_arr2file(pathes, f_path)
+            elif len(tree_pointers[vertex])>2 and visited_node[vertex] ==0:
+                neighbor1_count = tree_pointers[vertex][0]["count"]
+                neighbor2_count = tree_pointers[vertex][1]["count"]
 
+                if neighbor2_count >= neighbor1_count: #cheak if equle
+                    candidates[i] += tree_pointers[vertex][1]["bit"]
+                else:
+                    candidates[i] += tree_pointers[vertex][0]["bit"]
 
-
-
-
-
-
-
+    return candidates
 
 
 '''YAEL'''
@@ -1318,7 +1311,7 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
     for rm in rm_rights: remove = list(set(remove + rm))
     edge_left_pointers= list(set(edge_left_pointers) - set(remove))
 
-    return tree_pointers, edge_left_pointers
+    return tree_pointers, edge_left_pointers, common_samples_array
 
 def stitch_tree_iterative_no_thread(tree_pointers, edge_left_pointers,min_len_path=400): #at first, send the window_size as a shift
     '''

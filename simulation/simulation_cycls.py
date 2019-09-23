@@ -27,12 +27,11 @@ SIZE_OF_RETRIVED_KESYS_TO_PRINT = 0.995
 p = TryMkdir(DIR_RESULT_PATH)
 p = TryMkdir(p + DIR_PATH_SIMULATION)
 fragemnt_len_vec = [30]
-window_size_vec = [30]  # each has its own graph
-window_size = 22
+window_size_vec = [25]  # each has its own graph
 stitch_shift_size = 1
 quantile_vec = [0.9, 0.6]  # each has
-method_vec = ["notOpposite", "Opposite"]  # ["notOpposite","Opposite"]
-error_vec = [10]
+method_vec = ["cycle"]  # ["notOpposite","Opposite"]
+error_vec = [3]
 
 OK1=False
 i = 0
@@ -155,8 +154,9 @@ for quantile in quantile_vec:
                                  SAMPLE_NUM_PATH + METHOD_PATH)
 
                         methodFun = help.methodFunDict[method]
-                        retrieved_key[method] = methodFun(common_samples_df, stitch_shift_size,
-                                                          window_size)
+
+                        tree_pointers, edge_left_pointers, common_samples_array = func.build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
+                        retrieved_key[method] = func.stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array)
 
                         candidate_key[method] = max(retrieved_key[method], key=len)
                         dist[method], s1_match_indices[method] = func.levenshtein_edit_dist(key, candidate_key[method])

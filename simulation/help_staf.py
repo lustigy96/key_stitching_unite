@@ -16,10 +16,10 @@ def Error(error):
             "samples_num_vec": range(100000, 2000001, 100000)
              },
 
-        5: {"flip": 0.05,
-            "del": 0.05,
-            "insert": 0.05,
-            "samples_num_vec": [200000, 500000]
+        3: {"flip": 0.03,
+            "del": 0.03,
+            "insert": 0.03,
+            "samples_num_vec": [100000, 500000]
             #"samples_num_vec": [2000, 5000]
             },
 
