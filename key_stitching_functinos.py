@@ -1324,7 +1324,8 @@ def build_shift_pointers_tree(common_samples_df, stitch_shift_size, window_size)
                                                                 'start_idx':thr*length_10,
                                                                 'end_idx':end,
                                                                 'window_size':window_size,
-                                                                'rm_right':rm_rights[thr],})
+                                                                'rm_right':rm_rights[thr],
+                                                                 'common_samples_array':common_samples_array,})
         threads.append(t)
         t.start()
 
