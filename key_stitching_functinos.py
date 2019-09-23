@@ -1210,11 +1210,11 @@ def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
     candidates =[]
     i=0
     for root in edge_left_pointers:
-
+        candidates.append("")
         visited_node = {}
         path = [root]
         candidates[i] = common_samples_array[root]
-        visited_node[root] = 1
+        visited_node[root] = 0
         while True:
             if len(candidates) > 2048:
                 i +=1
@@ -1230,23 +1230,32 @@ def stitch_with_cycles(tree_pointers, edge_left_pointers, common_samples_array):
             if(visited_node[vertex] ==2):
                break
 
-            if len(tree_pointers[vertex])>2 and visited_node[vertex] ==1: #already visited take next neighobr
+            if len(tree_pointers[vertex])>1 and visited_node[vertex] ==1: #already visited take next neighobr
                 neighbor1_count = tree_pointers[vertex][0]["count"]
                 neighbor2_count = tree_pointers[vertex][1]["count"]
 
                 if neighbor2_count >= neighbor1_count: #cheak if equle
                     candidates[i] += tree_pointers[vertex][0]["bit"]
+                    path.append(tree_pointers[vertex][0]["next"])
                 else:
                     candidates[i] += tree_pointers[vertex][1]["bit"]
+                    path.append(tree_pointers[vertex][1]["next"])
 
-            elif len(tree_pointers[vertex])>2 and visited_node[vertex] ==0:
+            elif len(tree_pointers[vertex])>1 and visited_node[vertex] ==0:
                 neighbor1_count = tree_pointers[vertex][0]["count"]
                 neighbor2_count = tree_pointers[vertex][1]["count"]
 
                 if neighbor2_count >= neighbor1_count: #cheak if equle
                     candidates[i] += tree_pointers[vertex][1]["bit"]
+                    path.append(tree_pointers[vertex][1]["next"])
                 else:
                     candidates[i] += tree_pointers[vertex][0]["bit"]
+                    path.append(tree_pointers[vertex][0]["next"])
+            elif len(tree_pointers[vertex]) == 1:
+                candidates[i] += tree_pointers[vertex][0]["bit"]
+                path.append(tree_pointers[vertex][0]["next"])
+            elif len(tree_pointers[vertex]) == 0:
+                break
 
     return candidates
 

@@ -26,7 +26,7 @@ SIZE_OF_RETRIVED_KESYS_TO_PRINT = 0.995
 
 p = TryMkdir(DIR_RESULT_PATH)
 p = TryMkdir(p + DIR_PATH_SIMULATION)
-fragemnt_len_vec = [30]
+fragemnt_len_vec = [26]
 window_size_vec = [25]  # each has its own graph
 stitch_shift_size = 1
 quantile_vec = [0.9, 0.6]  # each has
